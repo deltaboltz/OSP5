@@ -57,17 +57,27 @@ void mainloop(int concurrent, const char* filename)
 
     clck* shclock = (clck*)shmcreate(sizeof(clck), currentID);
 
-    pcb* pcbtable = (pcb*)shmcreate(sizeof(pcb)*18, currentID);
-
-    std::bitset<18> bitmap(0);
-
     mlfq scheduleQ;
+    scheduleQ.pcbtable = (pcb*)shmcreate(sizeof(pcb)*18, currentID);
 
-    if(scheduleQ.isEmpty())
-    {
-        pcb process(nextPID);
-        scheduleQ.queue[0].push_back(&process);
-    }
+    scheduleQ.addProc();
+    scheduleQ.addProc();
+    scheduleQ.addProc();
+    scheduleQ.addProc();
+
+    scheduleQ.movePriority(&scheduleQ.pcbtable[0]);
+    scheduleQ.movePriority(&scheduleQ.pcbtable[0]);
+    scheduleQ.movePriority(scheduleQ.getFirst());
+
+    scheduleQ.toBlocked(&scheduleQ.pcbtable[3]);
+
+    scheduleQ.movePriority(&scheduleQ.pcbtable[2]);
+    scheduleQ.movePriority(&scheduleQ.pcbtable[2]);
+    scheduleQ.movePriority(&scheduleQ.pcbtable[2]);
+
+    scheduleQ.toExpired(&scheduleQ.pcbtable[2]);
+
+    scheduleQ.printQueues();
 
     shmdetach(shclock);
     shmdetach(pcbtable);
