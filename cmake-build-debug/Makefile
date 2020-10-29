@@ -210,6 +210,30 @@ src/oss.cpp.s:
 	$(MAKE) -f CMakeFiles/Project_4.dir/build.make CMakeFiles/Project_4.dir/src/oss.cpp.s
 .PHONY : src/oss.cpp.s
 
+src/osschild.o: src/osschild.cpp.o
+.PHONY : src/osschild.o
+
+# target to build an object file
+src/osschild.cpp.o:
+	$(MAKE) -f CMakeFiles/Project_4.dir/build.make CMakeFiles/Project_4.dir/src/osschild.cpp.o
+.PHONY : src/osschild.cpp.o
+
+src/osschild.i: src/osschild.cpp.i
+.PHONY : src/osschild.i
+
+# target to preprocess a source file
+src/osschild.cpp.i:
+	$(MAKE) -f CMakeFiles/Project_4.dir/build.make CMakeFiles/Project_4.dir/src/osschild.cpp.i
+.PHONY : src/osschild.cpp.i
+
+src/osschild.s: src/osschild.cpp.s
+.PHONY : src/osschild.s
+
+# target to generate assembly for a file
+src/osschild.cpp.s:
+	$(MAKE) -f CMakeFiles/Project_4.dir/build.make CMakeFiles/Project_4.dir/src/osschild.cpp.s
+.PHONY : src/osschild.cpp.s
+
 src/sharedmemory.o: src/sharedmemory.cpp.o
 .PHONY : src/sharedmemory.o
 
@@ -255,6 +279,9 @@ help:
 	@echo "... src/oss.o"
 	@echo "... src/oss.i"
 	@echo "... src/oss.s"
+	@echo "... src/osschild.o"
+	@echo "... src/osschild.i"
+	@echo "... src/osschild.s"
 	@echo "... src/sharedmemory.o"
 	@echo "... src/sharedmemory.i"
 	@echo "... src/sharedmemory.s"

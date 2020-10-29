@@ -16,8 +16,6 @@ struct pcb
     float burst;
     int pgid;
     int priority;
-    bool realTimeProc;
-    int realTimeChance = 1;
 
     pcb(int& extPid)
     {
@@ -26,11 +24,10 @@ struct pcb
         burst = 0;
         pgid = extPid;
         priority = 0;
-        realTimeProc = (rand() % 100 < realTimeChance);
     }
 };
 
-struct queues
+struct mlfq
 {
     std::list<pcb*> blocked;
     std::list<pcb*> queue[4];
@@ -44,9 +41,10 @@ struct queues
     bool isEmpty();
     pcb* getFirst();
     void movePriority(pcb* process);
+    void printQueues();
 };
 
-bool queues::isEmpty()
+bool mlfq::isEmpty()
 {
     for(auto q : this->queue)
     {
@@ -58,7 +56,7 @@ bool queues::isEmpty()
     return true;
 }
 
-pcb* queues::getFirst()
+pcb* mlfq::getFirst()
 {
     for(auto q : this->queue)
     {
@@ -70,7 +68,7 @@ pcb* queues::getFirst()
     return NULL;
 }
 
-void queues::movePriority(pcb *process)
+void mlfq::movePriority(pcb *process)
 {
     int PRI = process->priority;
 
@@ -93,6 +91,39 @@ void queues::movePriority(pcb *process)
 
         this->queue[PRI+1].push_back(process);
         this->queue[PRI].erase(i);
+    }
+}
+
+void mlfq::printQueues()
+{
+    std::cout << "Blocked: ";
+    for(auto proc : this->blocked)
+    {
+        std::cout << "(" << proc->pgid << ", " << proc->priority << ") " << std::endl;
+    }
+
+    std::cout << "\nPQ 1: ";
+    for(auto proc : this->queue[0])
+    {
+        std::cout << "(" << proc->pgid << ", " << proc->priority << ") " << std::endl;
+    }
+
+    std::cout << "\nPQ 2: ";
+    for(auto proc : this->queue[1])
+    {
+        std::cout << "(" << proc->pgid << ", " << proc->priority << ") " << std::endl;
+    }
+
+    std::cout << "\nPQ 3: ";
+    for(auto proc : this->queue[2])
+    {
+        std::cout << "(" << proc->pgid << ", " << proc->priority << ") " << std::endl;
+    }
+
+    std::cout << "\nPQ 4: ";
+    for(auto proc : this->queue[3])
+    {
+        std::cout << "(" << proc->pgid << ", " << proc->priority << ") " << std::endl;
     }
 }
 

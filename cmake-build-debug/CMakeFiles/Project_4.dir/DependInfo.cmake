@@ -8,6 +8,7 @@ SET(CMAKE_DEPENDS_CHECK_CXX
   "/classes/OS/connor/connor.4/src/errors.cpp" "/classes/OS/connor/connor.4/cmake-build-debug/CMakeFiles/Project_4.dir/src/errors.cpp.o"
   "/classes/OS/connor/connor.4/src/filehander.cpp" "/classes/OS/connor/connor.4/cmake-build-debug/CMakeFiles/Project_4.dir/src/filehander.cpp.o"
   "/classes/OS/connor/connor.4/src/oss.cpp" "/classes/OS/connor/connor.4/cmake-build-debug/CMakeFiles/Project_4.dir/src/oss.cpp.o"
+  "/classes/OS/connor/connor.4/src/osschild.cpp" "/classes/OS/connor/connor.4/cmake-build-debug/CMakeFiles/Project_4.dir/src/osschild.cpp.o"
   "/classes/OS/connor/connor.4/src/sharedmemory.cpp" "/classes/OS/connor/connor.4/cmake-build-debug/CMakeFiles/Project_4.dir/src/sharedmemory.cpp.o"
   )
 SET(CMAKE_CXX_COMPILER_ID "GNU")

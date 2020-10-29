@@ -1,1 +1,1 @@
-/usr/bin/c++   -g    CMakeFiles/Project_4.dir/src/oss.cpp.o CMakeFiles/Project_4.dir/src/sharedmemory.cpp.o CMakeFiles/Project_4.dir/src/childhandler.cpp.o CMakeFiles/Project_4.dir/src/errors.cpp.o CMakeFiles/Project_4.dir/src/filehander.cpp.o  -o Project_4 -rdynamic 
+/usr/bin/c++   -g    CMakeFiles/Project_4.dir/src/oss.cpp.o CMakeFiles/Project_4.dir/src/sharedmemory.cpp.o CMakeFiles/Project_4.dir/src/childhandler.cpp.o CMakeFiles/Project_4.dir/src/errors.cpp.o CMakeFiles/Project_4.dir/src/filehander.cpp.o CMakeFiles/Project_4.dir/src/osschild.cpp.o  -o Project_4 -rdynamic 

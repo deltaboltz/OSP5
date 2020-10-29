@@ -167,13 +167,37 @@ CMakeFiles/Project_4.dir/src/filehander.cpp.o.provides: CMakeFiles/Project_4.dir
 
 CMakeFiles/Project_4.dir/src/filehander.cpp.o.provides.build: CMakeFiles/Project_4.dir/src/filehander.cpp.o
 
+CMakeFiles/Project_4.dir/src/osschild.cpp.o: CMakeFiles/Project_4.dir/flags.make
+CMakeFiles/Project_4.dir/src/osschild.cpp.o: ../src/osschild.cpp
+	$(CMAKE_COMMAND) -E cmake_progress_report /classes/OS/connor/connor.4/cmake-build-debug/CMakeFiles $(CMAKE_PROGRESS_6)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/Project_4.dir/src/osschild.cpp.o"
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/Project_4.dir/src/osschild.cpp.o -c /classes/OS/connor/connor.4/src/osschild.cpp
+
+CMakeFiles/Project_4.dir/src/osschild.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Project_4.dir/src/osschild.cpp.i"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /classes/OS/connor/connor.4/src/osschild.cpp > CMakeFiles/Project_4.dir/src/osschild.cpp.i
+
+CMakeFiles/Project_4.dir/src/osschild.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Project_4.dir/src/osschild.cpp.s"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /classes/OS/connor/connor.4/src/osschild.cpp -o CMakeFiles/Project_4.dir/src/osschild.cpp.s
+
+CMakeFiles/Project_4.dir/src/osschild.cpp.o.requires:
+.PHONY : CMakeFiles/Project_4.dir/src/osschild.cpp.o.requires
+
+CMakeFiles/Project_4.dir/src/osschild.cpp.o.provides: CMakeFiles/Project_4.dir/src/osschild.cpp.o.requires
+	$(MAKE) -f CMakeFiles/Project_4.dir/build.make CMakeFiles/Project_4.dir/src/osschild.cpp.o.provides.build
+.PHONY : CMakeFiles/Project_4.dir/src/osschild.cpp.o.provides
+
+CMakeFiles/Project_4.dir/src/osschild.cpp.o.provides.build: CMakeFiles/Project_4.dir/src/osschild.cpp.o
+
 # Object files for target Project_4
 Project_4_OBJECTS = \
 "CMakeFiles/Project_4.dir/src/oss.cpp.o" \
 "CMakeFiles/Project_4.dir/src/sharedmemory.cpp.o" \
 "CMakeFiles/Project_4.dir/src/childhandler.cpp.o" \
 "CMakeFiles/Project_4.dir/src/errors.cpp.o" \
-"CMakeFiles/Project_4.dir/src/filehander.cpp.o"
+"CMakeFiles/Project_4.dir/src/filehander.cpp.o" \
+"CMakeFiles/Project_4.dir/src/osschild.cpp.o"
 
 # External object files for target Project_4
 Project_4_EXTERNAL_OBJECTS =
@@ -183,6 +207,7 @@ Project_4: CMakeFiles/Project_4.dir/src/sharedmemory.cpp.o
 Project_4: CMakeFiles/Project_4.dir/src/childhandler.cpp.o
 Project_4: CMakeFiles/Project_4.dir/src/errors.cpp.o
 Project_4: CMakeFiles/Project_4.dir/src/filehander.cpp.o
+Project_4: CMakeFiles/Project_4.dir/src/osschild.cpp.o
 Project_4: CMakeFiles/Project_4.dir/build.make
 Project_4: CMakeFiles/Project_4.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking CXX executable Project_4"
@@ -197,6 +222,7 @@ CMakeFiles/Project_4.dir/requires: CMakeFiles/Project_4.dir/src/sharedmemory.cpp
 CMakeFiles/Project_4.dir/requires: CMakeFiles/Project_4.dir/src/childhandler.cpp.o.requires
 CMakeFiles/Project_4.dir/requires: CMakeFiles/Project_4.dir/src/errors.cpp.o.requires
 CMakeFiles/Project_4.dir/requires: CMakeFiles/Project_4.dir/src/filehander.cpp.o.requires
+CMakeFiles/Project_4.dir/requires: CMakeFiles/Project_4.dir/src/osschild.cpp.o.requires
 .PHONY : CMakeFiles/Project_4.dir/requires
 
 CMakeFiles/Project_4.dir/clean:

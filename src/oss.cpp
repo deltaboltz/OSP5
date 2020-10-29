@@ -61,7 +61,7 @@ void mainloop(int concurrent, const char* filename)
 
     std::bitset<18> bitmap(0);
 
-    queues scheduleQ;
+    mlfq scheduleQ;
 
     if(scheduleQ.isEmpty())
     {

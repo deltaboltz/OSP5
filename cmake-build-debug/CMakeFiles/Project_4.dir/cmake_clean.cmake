@@ -4,6 +4,7 @@ FILE(REMOVE_RECURSE
   "CMakeFiles/Project_4.dir/src/childhandler.cpp.o"
   "CMakeFiles/Project_4.dir/src/errors.cpp.o"
   "CMakeFiles/Project_4.dir/src/filehander.cpp.o"
+  "CMakeFiles/Project_4.dir/src/osschild.cpp.o"
   "Project_4.pdb"
   "Project_4"
 )

@@ -80,6 +80,8 @@
       </Unit>
       <Unit filename="/classes/OS/connor/connor.4/src/oss.cpp">
       </Unit>
+      <Unit filename="/classes/OS/connor/connor.4/src/osschild.cpp">
+      </Unit>
       <Unit filename="/classes/OS/connor/connor.4/src/sharedmemory.cpp">
       </Unit>
       <Unit filename="/classes/OS/connor/connor.4/include/childhandler.h">
@@ -89,6 +91,8 @@
       <Unit filename="/classes/OS/connor/connor.4/include/errors.h">
       </Unit>
       <Unit filename="/classes/OS/connor/connor.4/include/filehandler.h">
+      </Unit>
+      <Unit filename="/classes/OS/connor/connor.4/include/scheduler.h">
       </Unit>
       <Unit filename="/classes/OS/connor/connor.4/include/sharedmemory.h">
       </Unit>
