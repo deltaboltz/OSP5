@@ -1,0 +1,8 @@
+bin/
+cmake-build-debug/
+
+.clion.*
+CMakeLists.txt
+
+*.out
+*.log
