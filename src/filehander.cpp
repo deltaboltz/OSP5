@@ -36,6 +36,7 @@ int addout_append(const char* name)
     }
 
     outfiles.push_back(out);
+    return outfiles.size();
 }
 
 void writeline(int filenum, std::string line)

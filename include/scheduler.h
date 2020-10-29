@@ -44,6 +44,7 @@ struct pcb
 
 struct mlfq
 {
+    pcb* pcbtable;
     std::list<pcb*> blocked;
     std::list<pcb*> queue[4];
     std::list<pcb*> expired;
@@ -62,7 +63,7 @@ struct mlfq
     void toExpired(pcb* process);
     std::list<pcb*>::iterator findInQueue(pcb* process);
     void printQueues();
-    void addProc();
+    int addProc();
 };
 
 

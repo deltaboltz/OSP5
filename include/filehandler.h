@@ -9,4 +9,4 @@ int addout(const char* name);
 int addout_append(const char* name);
 void writeline(int filenum, std::string line);
 
-#endif FILEHANDLER_H
+#endif

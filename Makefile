@@ -1,25 +1,29 @@
-SRC_DIR := src
+SRC_DIR	:= src
 OBJ_DIR := obj
 BIN_DIR := bin
 
 EXE1 := $(BIN_DIR)/oss
-FILE1 := $(OBJ_DIR)/oss.o
-SRC := $(wildcard $(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.0)
+EXE2 := $(BIN_DIR)/user
+FIL1 := $(OBJ_DIR)/user.o
+FIL2 := $(OBJ_DIR)/oss.o
+SRC  := $(wildcard $(SRC_DIR)/*.cpp)
+OBJ  := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-
-CC := g++ -std=c++11
+CC		 := g++ -std=c++11
 CPPFLAGS := -Iinclude -MMD -MP
-CFLAGS := -Wall -g
+CFLAGS 	 := -Wall -g
 
-.PHONY: all clean
+.PHONY: all clean cleanrun
 
-all: $(EXE1)
+all: $(EXE1) $(EXE2)
 
-$(EXE1): $(filter-out $(FILE1), $(OBJ)) | $(BIN_DIR)
+$(EXE1): $(filter-out $(FIL1), $(OBJ)) | $(BIN_DIR)
 	$(CC) $^ -o $@
 
-$(OBJ_DIR)/%.0: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+$(EXE2): $(filter-out $(FIL2), $(OBJ)) | $(BIN_DIR)
+	$(CC) $^ -o $@
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BIN_DIR) $(OBJ_DIR):
@@ -27,5 +31,8 @@ $(BIN_DIR) $(OBJ_DIR):
 
 clean:
 	@$(RM) -rv $(BIN_DIR) $(OBJ_DIR)
+
+cleanrun:
+	@$(RM) -rv $(BIN_DIR)/*.out $(BIN_DIR)/*.log
 
 -include $(OBJ:.o=.d)

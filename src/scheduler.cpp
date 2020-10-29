@@ -5,7 +5,7 @@
 #include "../include/scheduler.h"
 
 
-template<size_t> int findfirstunset(std::bitset<T> bs)
+template<size_t T> int findfirstunset(std::bitset<T> bs)
 {
     for(size_t i = 0; i < T; i++)
     {
@@ -28,14 +28,14 @@ bool mlfq::isEmpty()
     {
         if(!q.empty())
         {
-            return false
+            return false;
         }
     }
 
     return true;
 }
 
-void mlfq::addProc()
+int mlfq::addProc()
 {
     int index = findfirstunset(this->bitmap);
 
@@ -84,12 +84,7 @@ void mlfq::movePriority(pcb *process)
         this->queue[process->priority+1].push_back(process);
         this->queue[process->priority].erase(i);
     }
-    proc->priority++;
-}
-
-void mflq::toExpired(pcb* process)
-{
-
+    process->priority++;
 }
 
 void mlfq::printQueues()
@@ -134,7 +129,7 @@ void mlfq::toBlocked(pcb *process)
     this->blocked.push_back(process);
     this->queue[process->priority].erase(i);
 
-    proc->priority = -1;
+    process->priority = -1;
 }
 
 void mlfq::toExpired(pcb *process)
@@ -152,12 +147,12 @@ void mlfq::toExpired(pcb *process)
         this->queue[process->priority].erase(i);
     }
 
-    this->bitmap.reset(process->PCBTABLEPOS)
+    this->bitmap.reset(process->PCBTABLEPOS);
 }
 
 std::list<pcb *>::iterator mlfq::findInQueue(pcb *process)
 {
-    int PRI = proc->priority;
+    int PRI = process->priority;
     std::list<pcb*>::iterator i;
 
     if(PRI < 0)

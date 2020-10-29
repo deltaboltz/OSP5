@@ -80,7 +80,7 @@ void mainloop(int concurrent, const char* filename)
     scheduleQ.printQueues();
 
     shmdetach(shclock);
-    shmdetach(pcbtable);
+    shmdetach(scheduleQ.pcbtable);
     ipc_cleanup();
 
 }

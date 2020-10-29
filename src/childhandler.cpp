@@ -12,6 +12,7 @@
 #include <string>
 #include <cstring>
 #include "childhandler.h"
+#include "errors.h"
 
 std::set<pid_t> PIDS;
 
@@ -66,7 +67,22 @@ int forkexec(const char* cmd, int& procCounter)
 
     switch(cpid)
     {
-        
+        case -1:
+            perrorquit();
+            return -1;
+
+        case 0:
+            if(execvp(childargv[0], childargv) == -1)
+            {
+                perrorquit();
+            }
+            return 0;
+
+        default:
+            PIDS.insert(cpid);
+            procCounter++;
+            freeargv(childargv, childargc);
+            return cpid;
     }
 
 }
