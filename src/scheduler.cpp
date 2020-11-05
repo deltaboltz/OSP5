@@ -42,7 +42,6 @@ bool mlfq::isEmpty()
 int mlfq::addProc()
 {
     int index = findfirstunset(this->bitmap);
-    std::cout << "addProc: bitmap: " << this->bitmap << " index: " << index << "\n";
     if(index != -1)
     {
         pcb* newProc = new pcb(this->pid, index);
@@ -277,7 +276,7 @@ bool mlfq::isActive()
             return true;
         }
     }
-    return true;
+    return false;
 }
 
 void summary(mlfq& schq, clck* shclk, int quittype, std::string logfile, int logid)

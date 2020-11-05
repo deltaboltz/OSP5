@@ -74,8 +74,8 @@ struct mlfq
     std::bitset<18> bitmap;
 
     int pid = 0;
-    long idleStart = 0;
     long idleTime = 0;
+    long idleStart = 0;
 
     bool isEmpty();
     bool isActive();

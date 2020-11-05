@@ -66,8 +66,6 @@ int forkexec(const char* cmd, int& procCounter)
 
     const pid_t cpid = fork();
 
-    std::cout << "Starting PID " << cpid << "\n";
-    std::cout << "Counter: " << procCounter << "\n";
     switch(cpid)
     {
         case -1:
