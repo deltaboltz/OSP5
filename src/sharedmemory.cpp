@@ -232,7 +232,7 @@ void msgreceive(int keyID)
 void msgreceive(int keyID, int mtype)
 {
     struct msgbuffer buf;
-    if (msgrcv(msggetID(keyID), &buf, 0, mtype, 0) == -1)
+    if (msgrcv(msggetID(keyID), &buf, 0, mtype, 0) == -1 && errno != EINTR)
     {
         perrorquit();
     }
@@ -240,7 +240,7 @@ void msgreceive(int keyID, int mtype)
 
 void msgreceive(int key_id, pcbmsgbuffer* buf) {
     if (msgrcv(
-        msggetID(key_id), buf, sizeof(buf->data), buf->mtype, 0) == -1)
+        msggetID(key_id), buf, sizeof(buf->data), buf->mtype, 0) == -1 && errno != EINTR)
             perrorquit();
 }
 
@@ -248,7 +248,7 @@ bool msgreceivenw(int keyID)
 {
     struct msgbuffer buf;
 
-    if(msgrcv(msggetID(keyID), &buf, 0, 0, IPC_NOWAIT) == -1)
+    if(msgrcv(msggetID(keyID), &buf, 0, 0, IPC_NOWAIT) == -1 && errno != EINTR)
     {
         if(errno != ENOMSG)
         {

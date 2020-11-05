@@ -23,6 +23,7 @@ struct pcb
     long blockStart;
     long blockTime;
 
+
     int pid;
     int priority;
 
@@ -73,8 +74,11 @@ struct mlfq
     std::bitset<18> bitmap;
 
     int pid = 0;
+    long idleStart = 0;
+    long idleTime = 0;
 
     bool isEmpty();
+    bool isActive();
     int addProc();
 
     pcb* getFirst();
@@ -92,5 +96,6 @@ struct mlfq
 
 void unblockproc(mlfq& schedq, clck* shclck, int logid);
 void scheduleproc(mlfq& shedq, clck* shclck, pcb* proc, int logid, int& concCount);
+void summary(mlfq& schedq, clck* shclck, int quittype, std::string logfile, int logID);
 
 #endif

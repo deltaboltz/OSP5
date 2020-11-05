@@ -1,6 +1,7 @@
 //
 // Created by Connor on 10/29/2020.
 //
+#include <csignal>
 #include "scheduler.h"
 #include "childhandler.h"
 #include "filehandler.h"
@@ -228,7 +229,7 @@ void scheduleproc(mlfq& schedq, clck* shclck, pcb* proc, int logID, int& concCou
     msg->data[PCBNUM] = pcbnum;
     msg->data[TIMESLICE] = schedq.quantum[proc->priority];
 
-    writeline(logID, shclck->toString() + ": Scheduling process with PID: " + std::to_string(proc->pid) + " with time quantum of: " + std::to_string(msg->data[TIMESLICE]) + "NanoSeconds");
+    writeline(logID, shclck->toString() + ": Scheduling process with PID: " + std::to_string(proc->pid) + " with time quantum of: " + std::to_string(msg->data[TIMESLICE]) + " NanoSeconds");
 
     msgsend(2, msg);
 
@@ -238,7 +239,7 @@ void scheduleproc(mlfq& schedq, clck* shclck, pcb* proc, int logID, int& concCou
 
     shclck->increment(proc->burstTime);
     proc->cpuTime += proc->burstTime;
-    writeline(logID, shclck->toString() + " Message was received after " + std::to_string(msg->data[TIMESLICE]) + "NanoSeconds");
+    writeline(logID, shclck->toString() + " Message was received after " + std::to_string(proc->burstTime) + " NanoSeconds");
 
     if(msg->data[STATUS] == TERM)
     {
@@ -252,12 +253,87 @@ void scheduleproc(mlfq& schedq, clck* shclck, pcb* proc, int logID, int& concCou
         writeline(logID, shclck->toString() + ": Moving PID " + std::to_string(proc->pid) + " to queue: " + std::to_string(proc->priority + 1));
         schedq.movePriority(proc);
     }
-    else if(msg->data[STATUS] == 2)
+    else if(msg->data[STATUS] == BLOCK)
     {
         writeline(logID, shclck->toString() + ": Moving PID " + std::to_string(proc->pid) + " to blocked queue");
         schedq.toBlocked(proc);
+    }
+    else if(msg->data[STATUS] == PREEMTED)
+    {
+        writeline(logID, shclck->toString() + "PID " + std::to_string(proc->pid) + " was preempted and is now moving to priority: " + std::to_string(proc->priority + 1));
+        schedq.movePriority(proc);
     }
 
     delete msg;
 
 }
+
+bool mlfq::isActive()
+{
+    for(auto q : this->queue)
+    {
+        if(!q.empty())
+        {
+            return true;
+        }
+    }
+    return true;
+}
+
+void summary(mlfq& schq, clck* shclk, int quittype, std::string logfile, int logid)
+{
+    // PRINT SUMMARY
+    // log reason for termination
+    std::string summary;
+
+    if (quittype == SIGINT)
+    {
+        summary = shclk->toString() + ": Simulation terminated due to a SIGINT";
+    }
+    else if (quittype == SIGALRM)
+    {
+        summary = shclk->toString() + ": Simulation terminated due to reaching end of allotted time";
+        ipc_cleanup();
+    }
+    else if (quittype == 0)
+    {
+        summary = shclk->toString() + ": Simulation terminated after 100 processes were created";
+    }
+
+    std::cout << summary << "\n";
+    writeline(logid, summary);
+
+    // Average CPU Times
+    long long avgCpu = 0;
+    for (auto proc : schq.expired)
+    {
+        avgCpu += proc->cpuTime;
+    }
+    avgCpu /= schq.expired.size();
+
+    summary = "Average CPU Utilization per PID (ns): " + std::to_string(avgCpu);
+
+    std::cout << summary << "\n";
+    writeline(logid, summary);
+
+    // Average Blocked Queue Times
+    long long avgBlock = 0;
+    for (auto proc : schq.expired)
+    {
+        avgBlock  += proc->blockTime;
+    }
+    avgBlock /= schq.expired.size();
+    summary = "Average time in Blocked Queue per PID (ns): " + std::to_string(avgBlock);
+
+    std::cout << summary << "\n";
+    writeline(logid, summary);
+
+    // Average Idle CPU
+    summary = "Total CPU Idle Time (ns): " + std::to_string(schq.idleTime);
+
+    std::cout << summary << "\n";
+    writeline(logid, summary);
+
+    std::cout << "For a complete simulation log, please see " << logfile << "\n";
+}
+

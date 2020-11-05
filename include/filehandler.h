@@ -6,7 +6,7 @@
 #define FILEHANDLER_H
 
 int addout(const char* name);
-int addout_append(const char* name);
+int addout_append(std::string name);
 void writeline(int filenum, std::string line);
 
 #endif

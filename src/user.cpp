@@ -77,13 +77,14 @@ int main(int argc, char **argv)
         }
         else
         {
-            if(rand() % 2)
+            int decision = rand() % 3;
+            if(decision == 0)
             {
                 pcbtable[pcbnum].burstTime = msg->data[TIMESLICE];
                 msg->data[STATUS] = RUN;
                 msgsend(2, msg);
             }
-            else
+            else if(decision == 1)
             {
                 pcbtable[pcbnum].burstTime = rand() % msg->data[TIMESLICE];
                 msg->data[STATUS] = BLOCK;
@@ -99,6 +100,12 @@ int main(int argc, char **argv)
                 msgsend(2, msg);
 
                 msg->mtype = pcbnum+3;
+            }
+            else if(decision == 2)
+            {
+                pcbtable[pcbnum].burstTime = msg->data[TIMESLICE] / 100 * (1 + rand() % 99);
+                msg->data[STATUS] = PREEMTED;
+                msgsend(2, msg);
             }
         }
     }

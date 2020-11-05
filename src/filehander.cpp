@@ -25,7 +25,7 @@ int addout(const char* name)
     return outfiles.size() - 1;
 }
 
-int addout_append(const char* name)
+int addout_append(std::string name)
 {
     std::shared_ptr<std::ofstream> out(new(std::ofstream));
     out->open(name, std::ios_base::app);

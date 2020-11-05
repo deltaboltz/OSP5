@@ -8,7 +8,7 @@
 #include <sys/types.h>
 
 enum Data {PCBNUM, TIMESLICE, STATUS};
-enum Status {TERM, RUN, BLOCK, UNBLOCK};
+enum Status {TERM, RUN, BLOCK, UNBLOCK, PREEMTED};
 
 struct pcbmsgbuffer
 {

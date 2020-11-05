@@ -31,6 +31,7 @@ struct clck
     void set(std::string time);
 };
 
+std::string epochlogid();
 
 
 #endif

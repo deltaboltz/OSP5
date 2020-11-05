@@ -2,7 +2,7 @@
 // Created by Connor on 11/4/2020.
 //
 #include "clock_work.h"
-#include "../include/clock_work.h"
+#include <ctime>
 
 
 float clck::tofloat()
@@ -63,6 +63,11 @@ void clck::set(std::string time)
 {
     float time1 = std::stof(time);
     this->set(time1);
+}
+
+std::string epochlogid()
+{
+    return std::to_string(time(0));
 }
 
 

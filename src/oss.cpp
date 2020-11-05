@@ -44,7 +44,7 @@ void earlyQuitHandle()
     }
 }
 
-void mainloop(int concurrent, const char* filename)
+void mainloop(int concurrent, std::string filename)
 {
     int maxCount = 0;
     int concCount = 0;
@@ -63,33 +63,29 @@ void mainloop(int concurrent, const char* filename)
     msgcreate(currentID);
     pcb* proc;
 
-    while(!earlyquit)
-    {
-        if(schedq.isEmpty())
-        {
-            if (maxCount >= 100)
-            {
+    while(!earlyquit) {
+        if (schedq.isEmpty()) {
+            if (maxCount >= 100) {
                 earlyquit = true;
                 quitType = 0;
-            }
-            else
-            {
-                if(shclock->tofloat() < nextSpawnTime)
-                {
+            } else {
+                if (shclock->tofloat() < nextSpawnTime) {
                     shclock->set(nextSpawnTime);
                 }
             }
         }
 
-        if(!schedq.blocked.empty())
-        {
+        if (!schedq.isActive() && schedq.idleTime == 0) {
+            schedq.idleStart = shclock->clockSec * 1e9 + shclock->clockNano;
+        }
+
+        if (!schedq.blocked.empty()) {
             unblockproc(schedq, shclock, logID);
         }
 
         int pcbnum = -1;
 
-        if((maxCount < 100) && (shclock->tofloat() >= nextSpawnTime) && ((pcbnum = schedq.addProc()) != -1))
-        {
+        if ((maxCount < 100) && (shclock->tofloat() >= nextSpawnTime) && ((pcbnum = schedq.addProc()) != -1)) {
             std::cout << "Bitmap: " << schedq.bitmap << "\n";
             proc = &schedq.pcbtable[pcbnum];
 
@@ -97,53 +93,36 @@ void mainloop(int concurrent, const char* filename)
 
             proc->inceptTime = shclock->clockSec * 1e9 + shclock->clockNano;
 
-            writeline(logID, shclock->toString() + ": Spawing PID" + std::to_string(proc->pid) + " (" + std::to_string(++maxCount) + "/100)");
+            writeline(logID, shclock->toString() + ": Spawing PID" + std::to_string(proc->pid) + " (" +
+                             std::to_string(++maxCount) + "/100)");
 
-            nextSpawnTime = shclock->nextrand(maxBTSs *  1e9 + maxBTSn);
+            nextSpawnTime = shclock->nextrand(maxBTSs * 1e9 + maxBTSn);
 
-            if(maxCount < 100)
-            {
+            if (maxCount < 100) {
                 writeline(logID, "\tNext spawn will be @: " + std::to_string(nextSpawnTime));
             }
         }
 
-        if((proc = schedq.getFirst()) != NULL)
-        {
+        if ((proc = schedq.getFirst()) != NULL) {
             scheduleproc(schedq, shclock, proc, logID, concCount);
         }
 
-        shclock->increment(rand() % (long)1e9);
+        shclock->increment(rand() % (long) 1e9);
+
+
+        if ((proc = schedq.getFirst()) != NULL) {
+            if (schedq.idleStart) {
+                schedq.idleTime += shclock->clockSec * 1e9 + shclock->clockNano - schedq.idleStart;
+                schedq.idleStart = 0;
+            }
+            scheduleproc(schedq, shclock, proc, logID, concCount);
+        }
+        shclock->increment(rand() % (long) 1e9);
     }
 
-    if(quitType == SIGINT)
-    {
-        writeline(logID, shclock->toString() + ": Sim has terminated due to a SIGINT");
-    }
-    else if(quitType == SIGALRM)
-    {
-        writeline(logID, shclock->toString() + ": Sim has terminated due to a SIGALRM");
-    }
-    else if(quitType == 0)
-    {
-        writeline(logID, shclock->toString() + ": Sim has terminated due to 100 processes being created by OSS.cpp");
-    }
 
-    long long avgCPU = 0;
-    for(auto proc : schedq.expired)
-    {
-        avgCPU += proc->cpuTime;
-    }
-    avgCPU /= schedq.expired.size();
-    writeline(logID, "Average CPU Utilization (per PID) in NanoSeconds is: " + std::to_string(avgCPU) + "\n");
 
-    long long avgBlock = 0;
-    for(auto proc : schedq.expired)
-    {
-        avgBlock += proc->blockTime;
-    }
-    avgBlock /= schedq.expired.size();
-
-    writeline(logID, "Average Block Time (per PID) in NanoSeconds is: " + std::to_string(avgBlock) + "\n");
+    summary(schedq, shclock, quitType, filename, logID);
 
     //avg Idle CPU
 
@@ -167,10 +146,10 @@ int main(int argc, char **argv)
 
     int concurrent = 18;
 
-    const char* filename = "out.log";
+    std::string filename = "output-" + epochlogid() + ".log";
 
     int MAXTIME = 3;
-    //alarm(MAXTIME);
+    alarm(MAXTIME);
 
     mainloop(concurrent, filename);
 
