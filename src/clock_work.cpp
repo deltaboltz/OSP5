@@ -18,9 +18,10 @@ std::string clck::toString()
     {
         rep += "0";
     }
+    return rep + std::to_string(this->clockNano);
 }
 
-void clck::increment(int nanoSeconds)
+void clck::increment(long nanoSeconds)
 {
     this->clockNano += nanoSeconds;
     while(this->clockNano > 1e9)
@@ -30,7 +31,7 @@ void clck::increment(int nanoSeconds)
     }
 }
 
-void clck::decrement(int nanoSeconds)
+void clck::decrement(long nanoSeconds)
 {
     this->clockNano -= nanoSeconds;
     while(this->clockNano < 0)
@@ -45,7 +46,7 @@ void clck::decrement(int nanoSeconds)
     }
 }
 
-float clck::nextrand(int maxNano) {
+float clck::nextrand(long maxNano) {
     clck val;
     val.clockSec = this->clockSec;
     val.clockNano = this->clockNano;

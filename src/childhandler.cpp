@@ -2,6 +2,7 @@
 // Created by connor on 10/26/2020.
 //
 
+#include <iostream>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -65,6 +66,8 @@ int forkexec(const char* cmd, int& procCounter)
 
     const pid_t cpid = fork();
 
+    std::cout << "Starting PID " << cpid << "\n";
+    std::cout << "Counter: " << procCounter << "\n";
     switch(cpid)
     {
         case -1:
@@ -90,9 +93,9 @@ int forkexec(const char* cmd, int& procCounter)
 int updatechildcount(int& procCount)
 {
     int wstatus;
-    pid_t pid = 0;
+    pid_t pid;
 
-    switch((pid == waitpid(-1, &wstatus, WNOHANG)))
+    switch((pid = waitpid(-1, &wstatus, WNOHANG)))
     {
         case -1:
             perrorquit();
@@ -100,6 +103,24 @@ int updatechildcount(int& procCount)
 
         case 0:
             return 0;
+
+        default:
+            PIDS.erase(pid);
+            procCount--;
+            return pid;
+    }
+}
+
+int waitforanychild(int& procCount)
+{
+    int wstatus;
+    pid_t pid;
+
+    switch((pid = waitpid(-1, &wstatus, 0)))
+    {
+        case -1:
+            perrorquit();
+            return -1;
 
         default:
             PIDS.erase(pid);

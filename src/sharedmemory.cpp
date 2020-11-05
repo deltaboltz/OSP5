@@ -28,17 +28,21 @@ struct msgbuffer
 key_t getkeyfromid(int keyID)
 {
     key_t key = ftok(".", keyID);
+    if (key == -1)
+    {
+        perrorquit();
+    }
     return key;
 }
 
 int shmlookID(int keyID)
 {
-    key_t key = ftok(".", keyID);
-    if(key == -1)
+    int shmid = shmget(getkeyfromid(keyID), 0, 0);
+    if (shmid == -1)
     {
         perrorquit();
     }
-    return key;
+    return shmid;
 }
 
 
@@ -232,6 +236,12 @@ void msgreceive(int keyID, int mtype)
     {
         perrorquit();
     }
+}
+
+void msgreceive(int key_id, pcbmsgbuffer* buf) {
+    if (msgrcv(
+        msggetID(key_id), buf, sizeof(buf->data), buf->mtype, 0) == -1)
+            perrorquit();
 }
 
 bool msgreceivenw(int keyID)

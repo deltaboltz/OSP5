@@ -48,7 +48,6 @@ bool msgreceivenw(int keyID);
 bool msgreceivenw(int keyID, int mtype);
 bool msgreceivenw(int keyID, pcbmsgbuffer* buf);
 
-void msgreceive(int keyID);
 void ipc_cleanup();
 
 #endif

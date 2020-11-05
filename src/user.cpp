@@ -38,6 +38,7 @@ int main(int argc, char **argv)
     pcb* pcbtable = (pcb*)shmlook(1);
 
     int pcbnum = std::stoi(argv[1]);
+    std::cout << "PCB #" << pcbnum << " started\n";
 
     pcbmsgbuffer* msg = new pcbmsgbuffer;
 

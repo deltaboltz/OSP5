@@ -10,8 +10,8 @@
 
 struct clck
 {
-    int clockSec;
-    int clockNano;
+    long clockSec;
+    long clockNano;
 
     clck()
     {
@@ -22,10 +22,10 @@ struct clck
     float tofloat();
     std::string toString();
 
-    void increment(int nanoSeconds);
-    void decrement(int nanoSeconds);
+    void increment(long nanoSeconds);
+    void decrement(long nanoSeconds);
 
-    float nextrand(int maxNano);
+    float nextrand(long maxNano);
 
     void set(float time);
     void set(std::string time);

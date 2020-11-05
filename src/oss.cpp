@@ -88,8 +88,9 @@ void mainloop(int concurrent, const char* filename)
 
         int pcbnum = -1;
 
-        if((maxCount < 100) && (shclock->tofloat() >= nextSpawnTime) && ((pcbnum == schedq.addProc()) != -1))
+        if((maxCount < 100) && (shclock->tofloat() >= nextSpawnTime) && ((pcbnum = schedq.addProc()) != -1))
         {
+            std::cout << "Bitmap: " << schedq.bitmap << "\n";
             proc = &schedq.pcbtable[pcbnum];
 
             forkexec("user " + std::to_string(pcbnum), concCount);
@@ -106,7 +107,7 @@ void mainloop(int concurrent, const char* filename)
             }
         }
 
-        if((proc == schedq.getFirst()) != NULL)
+        if((proc = schedq.getFirst()) != NULL)
         {
             scheduleproc(schedq, shclock, proc, logID, concCount);
         }
@@ -169,7 +170,7 @@ int main(int argc, char **argv)
     const char* filename = "out.log";
 
     int MAXTIME = 3;
-    alarm(MAXTIME);
+    //alarm(MAXTIME);
 
     mainloop(concurrent, filename);
 

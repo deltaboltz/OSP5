@@ -5,7 +5,6 @@
 #include "childhandler.h"
 #include "filehandler.h"
 #include "clock_work.h"
-#include "scheduler.h"
 #include "sharedmemory.h"
 
 
@@ -42,7 +41,7 @@ bool mlfq::isEmpty()
 int mlfq::addProc()
 {
     int index = findfirstunset(this->bitmap);
-
+    std::cout << "addProc: bitmap: " << this->bitmap << " index: " << index << "\n";
     if(index != -1)
     {
         pcb* newProc = new pcb(this->pid, index);
@@ -77,34 +76,21 @@ void mlfq::movePriority(pcb *process)
     {
         return;
     }
-    std::cout << "1" << std::endl;
 
     auto i = this->findInQueue(process);
 
     if(process->priority < 0)
     {
-        std::cout << "2" << std::endl;
-
         this->queue[process->priority+1].push_back(process);
         this->blocked.erase(i);
-        std::cout << "3" << std::endl;
-
     }
     else if(process->priority < 3)
     {
-        std::cout << "4" << std::endl;
-
         this->queue[process->priority+1].push_back(process);
         this->queue[process->priority].erase(i);
-        std::cout << "5" << std::endl;
-
     }
-    std::cout << "6" << std::endl;
 
     process->priority++;
-
-    std::cout << "7" << std::endl;
-
 }
 
 
@@ -231,7 +217,7 @@ void unblockproc(mlfq& schedq, clck* shclck, int logID)
     delete msg;
 }
 
-void scheduleproc(mlfq& schedq, clck* shclck, pcb* proc, int logID, int& conCount)
+void scheduleproc(mlfq& schedq, clck* shclck, pcb* proc, int logID, int& concCount)
 {
     shclck->increment(100 + rand() % 9901);
     int pcbnum = proc->PCBTABLEPOS;
@@ -259,6 +245,7 @@ void scheduleproc(mlfq& schedq, clck* shclck, pcb* proc, int logID, int& conCoun
         writeline(logID, shclck->toString() + ": PID " + std::to_string(proc->pid) + " is terminating");
 
         schedq.toExpired(proc);
+        waitforanychild(concCount);
     }
     else if(msg->data[STATUS] == RUN)
     {
