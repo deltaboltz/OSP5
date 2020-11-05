@@ -86,3 +86,14 @@ int forkexec(const char* cmd, int& procCounter)
     }
 
 }
+
+void killall()
+{
+    for (int p : PIDS)
+    {
+        if(kill(p, SIGINT) == -1)
+        {
+            perrorquit();
+        }
+    }
+}

@@ -10,17 +10,15 @@
 #include <string>
 #include <cstring>
 #include <set>
-#include "sharedmemory.h"
 #include "errors.h"
+#include "sharedmemory.h"
+#include "filehandler.h"
 
 std::set<int> shmsegments;
 std::set<int> semaphores;
 std::set<int> msgqueues;
 
-struct msgbuffer
-{
-    long msgtype;
-};
+
 
 key_t getkeyfromid(int keyID)
 {
@@ -193,6 +191,25 @@ void msgsend(int keyID)
     }
 }
 
+void msgsend(int keyID, int mtype)
+{
+    struct msgbuffer buf;
+    buf.mtype = mytype;
+
+    if(msgsnd(msggetID(keyID), &buf, 0 ,0) == -1)
+    {
+        perrorquit();
+    }
+}
+
+void msgsend(int keyID, pcbmsgbuffer* buf)
+{
+    if((msgsnd(msggetID(keyID)), buf, sizeof(buf->data), 0) == -1)
+    {
+        perrorquit();
+    }
+}
+
 void msgreceive(int keyID)
 {
     struct msgbuffer buf;
@@ -201,6 +218,64 @@ void msgreceive(int keyID)
     {
         perrorquit();
     }
+}
+
+void msgreceive(int keyID, int mtype)
+{
+    if((msgrcv(msggetID(keyID)), buf, sizeof(buf->data), buf->mtype, 0) == -1)
+    {
+        perrorquit();
+    }
+}
+
+bool msgreceivenw(int keyID)
+{
+    struct msgbuffer buf;
+
+    if((msgrcv(msggetID(keyID)), &buf, 0, 0, IPC_NOWAIT) == -1)
+    {
+        if(errno != ENOMSG)
+        {
+            perrorquit();
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool msgreceivenw(int keyID, pcbmsgbuffer* buf)
+{
+    if((msgrcv(msggetID(keyID)), buf, sizeof(buf->data), buf->mtype, IPCNOWAIT) == -1)
+    {
+        if(errno != ENOMSG)
+        {
+            perrorquit();
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool msgrecwithdatanw(int keyID, int pcbnum)
+{
+    struct pcbmsgbuffer* buf = new pcbmsgbuffer;
+
+    buf->data[2] = -1;
+
+    if((msgrcv(msggetID(keyID)), buf, sizeof(buf->data), pcbnum+2, IPC_NOWAIT) == -1 && errno != ENOMSG)
+    {
+        perrorquit();
+    }
+
+    return buf;
 }
 
 void msgdestroy(int keyID)

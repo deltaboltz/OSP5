@@ -5,6 +5,8 @@
 #ifndef CHILDHANDLER_H
 #define CHILDHANDLER_H
 
+#include <string>
+
 char** makeargv(std::string line, int& sizeout);
 void freeargv(char** argv, int size);
 int forkexec(std::string cmd, int& procCounter);

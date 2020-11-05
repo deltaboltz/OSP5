@@ -2,7 +2,10 @@
 // Created by Connor on 10/29/2020.
 //
 #include "scheduler.h"
-#include "../include/scheduler.h"
+#include "childhandler.h"
+#include "filehandler.h"
+#include "clock_work.h"
+#include "sharedmemory.h"
 
 
 template<size_t T> int findfirstunset(std::bitset<T> bs)
@@ -53,6 +56,8 @@ int mlfq::addProc()
     return index;
 }
 
+
+
 pcb* mlfq::getFirst()
 {
     for(auto q : this->queue)
@@ -71,20 +76,104 @@ void mlfq::movePriority(pcb *process)
     {
         return;
     }
+    std::cout << "1" << std::endl;
 
     auto i = this->findInQueue(process);
 
     if(process->priority < 0)
     {
+        std::cout << "2" << std::endl;
+
         this->queue[process->priority+1].push_back(process);
         this->blocked.erase(i);
+        std::cout << "3" << std::endl;
+
     }
     else if(process->priority < 3)
     {
+        std::cout << "4" << std::endl;
+
         this->queue[process->priority+1].push_back(process);
         this->queue[process->priority].erase(i);
+        std::cout << "5" << std::endl;
+
     }
+    std::cout << "6" << std::endl;
+
     process->priority++;
+
+    std::cout << "7" << std::endl;
+
+}
+
+
+
+void mlfq::toBlocked(pcb *process)
+{
+    auto i = this->findInQueue(process);
+
+    this->blocked.push_back(process);
+    this->queue[process->priority].erase(i);
+
+    process->priority = -1;
+}
+
+void mlfq::toExpired(pcb *process)
+{
+    auto i = this->findInQueue(process);
+
+    this->expired.push_back(new pcb(*process));
+
+    if(process->priority < 0)
+    {
+        this->blocked.erase(i);
+    }
+    else
+    {
+        this->queue[process->priority].erase(i);
+    }
+
+    this->bitmap.reset(process->PCBTABLEPOS);
+}
+
+std::list<pcb*>::iterator mlfq::findInQueue(pcb *process)
+{
+    int PRI = process->priority;
+    std::list<pcb*>::iterator i;
+
+    if(PRI < 0)
+    {
+        i = this->blocked.begin();
+
+        while(i != this->blocked.end() && (*i) != process)
+        {
+            i++;
+        }
+    }
+    else if(PRI < 4)
+    {
+        i = this->queue[PRI].begin();
+
+        while(i != this->queue[PRI].end() && (*i) != process)
+        {
+            i++;
+        }
+    }
+    else
+    {
+        i = this->expired.begin();
+
+        while(i != this->expired.end() && (*i) != process)
+        {
+            i++;
+        }
+    }
+
+    if((*i) != process)
+    {
+        perrorquit();
+    }
+    return i;
 }
 
 void mlfq::printQueues()
@@ -122,70 +211,21 @@ void mlfq::printQueues()
     }
 }
 
-void mlfq::toBlocked(pcb *process)
+void unblockproc(mlfq& schedq, clck* shclck, int logID)
 {
-    auto i = this->findInQueue(process);
+    pcbmsgbuffer* msg = new pcbmsgbuffer;
 
-    this->blocked.push_back(process);
-    this->queue[process->priority].erase(i);
+    msg->mtype = 2;
 
-    process->priority = -1;
-}
-
-void mlfq::toExpired(pcb *process)
-{
-    auto i = this->findInQueue(process);
-
-    this->expired.push_back(new pcb(*process));
-
-    if(process->priority < 0)
+    if(msgreceivenw(2, msg))
     {
-        this->blocked.erase(i);
-    }
-    else
-    {
-        this->queue[process->priority].erase(i);
+        shclck->increment(1000 + rand() % 19901);
+        pcb* proc = &schedq.pcbtable[msg->data[PCBNUM]];
+
+        writeline(logID, shclck->toString() + ": Unblocking PID " + std::to_string(proc->pid));
+
+        schedq.movePriority(proc);
     }
 
-    this->bitmap.reset(process->PCBTABLEPOS);
-}
-
-std::list<pcb *>::iterator mlfq::findInQueue(pcb *process)
-{
-    int PRI = process->priority;
-    std::list<pcb*>::iterator i;
-
-    if(PRI < 0)
-    {
-        i = this->blocked.begin();
-
-        while(i != this->blocked.end() && (*i) != process)
-        {
-            i++;
-        }
-    }
-    else if(PRI < 4)
-    {
-        i = this->queue[PRI].begin();
-
-        while(i != this->queue[PRI].end() && (*i) != process)
-        {
-            i++;
-        }
-    }
-    else
-    {
-        i = this->expired.begin();
-
-        while(i != this->expired.end() && (*i) != process)
-        {
-            i++;
-        }
-    }
-
-    if((*i) != process)
-    {
-        perrorquit();
-        return i;
-    }
+    delete msg;
 }
