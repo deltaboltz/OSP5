@@ -87,6 +87,27 @@ int forkexec(const char* cmd, int& procCounter)
 
 }
 
+int updatechildcount(int& procCount)
+{
+    int wstatus;
+    pid_t pid = 0;
+
+    switch((pid == waitpid(-1, &wstatus, WNOHANG)))
+    {
+        case -1:
+            perrorquit();
+            return -1;
+
+        case 0:
+            return 0;
+
+        default:
+            PIDS.erase(pid);
+            procCount--;
+            return pid;
+    }
+}
+
 void killall()
 {
     for (int p : PIDS)

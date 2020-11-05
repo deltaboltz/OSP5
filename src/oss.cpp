@@ -52,7 +52,6 @@ void mainloop(int concurrent, const char* filename)
     int logID = addout_append(filename);
     int maxBTSs = 2;
     int maxBTSn = 0;
-    float nextSpawn;
 
     srand(getpid());
 
@@ -109,7 +108,7 @@ void mainloop(int concurrent, const char* filename)
 
         if((proc == schedq.getFirst()) != NULL)
         {
-            scheudleproc(schedq, shclock, proc, logID, concCount);
+            scheduleproc(schedq, shclock, proc, logID, concCount);
         }
 
         shclock->increment(rand() % (long)1e9);

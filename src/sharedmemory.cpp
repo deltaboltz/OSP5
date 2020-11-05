@@ -10,6 +10,8 @@
 #include <string>
 #include <cstring>
 #include <set>
+#include <errno.h>
+#include <cerrno>
 #include "errors.h"
 #include "sharedmemory.h"
 #include "filehandler.h"
@@ -18,7 +20,10 @@ std::set<int> shmsegments;
 std::set<int> semaphores;
 std::set<int> msgqueues;
 
-
+struct msgbuffer
+{
+    long mtype;
+};
 
 key_t getkeyfromid(int keyID)
 {
@@ -172,8 +177,8 @@ void msgcreate(int& keyID)
 
 int msggetID(int keyID)
 {
-    int msqID = msgget(getkeyfromid(keyID), 0660);
-    if(msqID = -1)
+    int msqID;
+    if((msqID = msgget(getkeyfromid(keyID), 0660)) == -1)
     {
         perrorquit();
     }
@@ -183,7 +188,7 @@ int msggetID(int keyID)
 void msgsend(int keyID)
 {
     struct msgbuffer buf;
-    buf.msgtype = 1;
+    buf.mtype = 1;
 
     if(msgsnd(msggetID(keyID), &buf, 0 ,0) == -1)
     {
@@ -194,7 +199,7 @@ void msgsend(int keyID)
 void msgsend(int keyID, int mtype)
 {
     struct msgbuffer buf;
-    buf.mtype = mytype;
+    buf.mtype = mtype;
 
     if(msgsnd(msggetID(keyID), &buf, 0 ,0) == -1)
     {
@@ -204,7 +209,7 @@ void msgsend(int keyID, int mtype)
 
 void msgsend(int keyID, pcbmsgbuffer* buf)
 {
-    if((msgsnd(msggetID(keyID)), buf, sizeof(buf->data), 0) == -1)
+    if (msgsnd(msggetID(keyID), buf, sizeof(buf->data), 0) == -1)
     {
         perrorquit();
     }
@@ -222,7 +227,8 @@ void msgreceive(int keyID)
 
 void msgreceive(int keyID, int mtype)
 {
-    if((msgrcv(msggetID(keyID)), buf, sizeof(buf->data), buf->mtype, 0) == -1)
+    struct msgbuffer buf;
+    if (msgrcv(msggetID(keyID), &buf, 0, mtype, 0) == -1)
     {
         perrorquit();
     }
@@ -232,7 +238,7 @@ bool msgreceivenw(int keyID)
 {
     struct msgbuffer buf;
 
-    if((msgrcv(msggetID(keyID)), &buf, 0, 0, IPC_NOWAIT) == -1)
+    if(msgrcv(msggetID(keyID), &buf, 0, 0, IPC_NOWAIT) == -1)
     {
         if(errno != ENOMSG)
         {
@@ -249,7 +255,7 @@ bool msgreceivenw(int keyID)
 
 bool msgreceivenw(int keyID, pcbmsgbuffer* buf)
 {
-    if((msgrcv(msggetID(keyID)), buf, sizeof(buf->data), buf->mtype, IPCNOWAIT) == -1)
+    if(msgrcv(msggetID(keyID), buf, sizeof(buf->data), buf->mtype, IPC_NOWAIT) == -1)
     {
         if(errno != ENOMSG)
         {
@@ -270,7 +276,7 @@ bool msgrecwithdatanw(int keyID, int pcbnum)
 
     buf->data[2] = -1;
 
-    if((msgrcv(msggetID(keyID)), buf, sizeof(buf->data), pcbnum+2, IPC_NOWAIT) == -1 && errno != ENOMSG)
+    if(msgrcv(msggetID(keyID), buf, sizeof(buf->data), pcbnum+2, IPC_NOWAIT) == -1 && errno != ENOMSG)
     {
         perrorquit();
     }

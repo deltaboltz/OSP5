@@ -5,6 +5,7 @@
 #include "childhandler.h"
 #include "filehandler.h"
 #include "clock_work.h"
+#include "scheduler.h"
 #include "sharedmemory.h"
 
 
@@ -228,4 +229,48 @@ void unblockproc(mlfq& schedq, clck* shclck, int logID)
     }
 
     delete msg;
+}
+
+void scheduleproc(mlfq& schedq, clck* shclck, pcb* proc, int logID, int& conCount)
+{
+    shclck->increment(100 + rand() % 9901);
+    int pcbnum = proc->PCBTABLEPOS;
+
+    pcbmsgbuffer* msg = new pcbmsgbuffer;
+
+    msg->mtype = pcbnum + 3;
+    msg->data[PCBNUM] = pcbnum;
+    msg->data[TIMESLICE] = schedq.quantum[proc->priority];
+
+    writeline(logID, shclck->toString() + ": Scheduling process with PID: " + std::to_string(proc->pid) + " with time quantum of: " + std::to_string(msg->data[TIMESLICE]) + "NanoSeconds");
+
+    msgsend(2, msg);
+
+    msg->mtype = 1;
+
+    msgreceive(2, msg);
+
+    shclck->increment(proc->burstTime);
+    proc->cpuTime += proc->burstTime;
+    writeline(logID, shclck->toString() + " Message was received after " + std::to_string(msg->data[TIMESLICE]) + "NanoSeconds");
+
+    if(msg->data[STATUS] == TERM)
+    {
+        writeline(logID, shclck->toString() + ": PID " + std::to_string(proc->pid) + " is terminating");
+
+        schedq.toExpired(proc);
+    }
+    else if(msg->data[STATUS] == RUN)
+    {
+        writeline(logID, shclck->toString() + ": Moving PID " + std::to_string(proc->pid) + " to queue: " + std::to_string(proc->priority + 1));
+        schedq.movePriority(proc);
+    }
+    else if(msg->data[STATUS] == 2)
+    {
+        writeline(logID, shclck->toString() + ": Moving PID " + std::to_string(proc->pid) + " to blocked queue");
+        schedq.toBlocked(proc);
+    }
+
+    delete msg;
+
 }

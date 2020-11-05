@@ -2,6 +2,13 @@
 // Created by connor on 10/27/2020.
 //
 
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
+#include <sys/msg.h>
+#include <set>
+
 #include <string>
 #include <cstring>
 #include <cstdlib>

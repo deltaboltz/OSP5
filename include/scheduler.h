@@ -91,6 +91,6 @@ struct mlfq
 };
 
 void unblockproc(mlfq& schedq, clck* shclck, int logid);
-void scheudleproc(mlfq& shedq, clck* shclck, pcb* proc, int logid, int& concCount);
+void scheduleproc(mlfq& shedq, clck* shclck, pcb* proc, int logid, int& concCount);
 
 #endif
