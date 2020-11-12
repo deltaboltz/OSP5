@@ -13,6 +13,9 @@
 #include "scheduler.h"
 #include "clock_work.h"
 
+
+//Comment
+
 volatile bool earlyquit = false;
 volatile bool interrupt = false;
 volatile int quitType = 0;
@@ -180,5 +183,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-
