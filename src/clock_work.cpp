@@ -7,47 +7,58 @@
 #include <cstring>
 #include "clock_work.h"
 
-float clk::tofloat() {
+float clk::tofloat()
+
+{
     return this->clk_s + (float)this->clk_n/(float)1e9;
 }
 
-std::string clk::tostring() {
+std::string clk::tostring()
+{
     char buf[256];
     sprintf(buf, "%ld.%09ld", this->clk_s, this->clk_n);
     return std::string(buf);
 }
 
-void clk::set(float time) {
+void clk::set(float time)
+{
     this->clk_s = (long)time;
     this->clk_n = (long)((time - this->clk_s) * 1e9);
 }
 
-void clk::set(std::string time) {
+void clk::set(std::string time)
+{
     float ftime = std::stof(time);
     this->set(ftime);
 }
 
-void clk::inc(long ns) {
+void clk::inc(long ns)
+{
     this->clk_n += ns;
-    while (this->clk_n >= 1e9) {
+    while (this->clk_n >= 1e9)
+    {
         this->clk_n -= 1e9;
         this->clk_s += 1;
     }
 }
 
-void clk::dec(long ns) {
+void clk::dec(long ns)
+{
     this->clk_n -= ns;
-    while (this->clk_n < 0) {
+    while (this->clk_n < 0)
+    {
         this->clk_n += 1e9;
         this->clk_s -= 1;
     }
-    if (this->clk_s < 0) {
+    if (this->clk_s < 0)
+    {
         this->clk_n = 0;
         this->clk_s = 0;
     }
 }
 
-float clk::nextrand(long maxns) {
+float clk::nextrand(long maxns)
+{
     clk copy;
     copy.clk_s = this->clk_s;
     copy.clk_n = this->clk_n;
@@ -55,16 +66,19 @@ float clk::nextrand(long maxns) {
     return copy.tofloat();
 }
 
-long clk::tonano() {
+long clk::tonano()
+{
     return this->clk_s*1e9 + this->clk_n;
 }
 
-std::string epochstr() {
+std::string epochstr()
+{
 
     return std::to_string(time(0));
 }
 
-long floattimetonano(float time) {
+long floattimetonano(float time)
+{
 
     long s = (long)time;
     long n = (long)((time - s) * 1e9);

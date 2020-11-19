@@ -8,27 +8,37 @@
 #include "error_handler.h"
 #include "file_handler.h"
 
-int File::readline(std::string& outstr) {
+int File::readline(std::string& outstr)
+{
+  std::ifstream stream(this->name.cstr(), this->mode);
 
-    if (std::getline(*this->stream, outstr))    return 1;
+  if(std::getline(stream, outstr))
+  {
+    return 1;
+  }
 
-    if (this->stream->bad()) customerrorquit("Unable to read from file");
-    return 0;
+  if(stream.bad())
+  {
+    customerrorquit("Unable to read file");
+  }
 }
 
-void File::writeline(std::string line) {
+void File::writeline(std::string line)
+{
     this->write(line + "\n");
 }
 
 void File::write(std::string msg)
 {
 
-    this->stream = new std::fstream(this->name.c_str(), this->mode);
+    std::ofstream stream(this->name.c_str(), this->mode);
 
-    (*this->stream) << msg;
+    stream << msg;
 
-    if (this->stream->bad()) customerrorquit("Unable to write to file");
+    if (this->stream->bad())
+    {
+      customerrorquit("Unable to write to file");
+    }
 
     this->stream->flush();
-    delete this->stream;
 }

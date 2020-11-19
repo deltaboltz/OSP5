@@ -19,11 +19,13 @@
 
 std::set<pid_t> PIDS;
 
-char** makeargv(std::string line, int& size) {
+char** makeargv(std::string line, int& size)
+{
 
     std::istringstream iss(line);
     std::vector<std::string> argvector;
-    while (iss) {
+    while (iss)
+    {
 
         std::string sub;
         iss >> sub;
@@ -32,7 +34,8 @@ char** makeargv(std::string line, int& size) {
 
     size = argvector.size();
     char** out = new char*[size];
-    for (int i : range(size-1)) {
+    for (int i : range(size-1))
+    {
 
         out[i] = new char[argvector[i].size()];
         strcpy(out[i], argvector[i].c_str());
@@ -42,9 +45,11 @@ char** makeargv(std::string line, int& size) {
     return out;
 }
 
-void freeargv(char** argv, int size) {
+void freeargv(char** argv, int size)
+{
 
-    for (int x : range(size)) {
+    for (int x : range(size))
+    {
 
         delete[] argv[x];
     }
@@ -52,29 +57,34 @@ void freeargv(char** argv, int size) {
     delete[] argv;
 }
 
-int forkexec(std::string cmd, int& pr_count) {
+int forkexec(std::string cmd, int& pr_count)
+{
 
     return forkexec(cmd.c_str(), pr_count);
 }
 
-int forkexec(const char* cmd, int& pr_count) {
+int forkexec(const char* cmd, int& pr_count)
+{
 
     int child_argc;
 
     char** child_argv = makeargv(cmd, child_argc);
     const pid_t child_pid = fork();
-    switch(child_pid) {
+    switch(child_pid)
+    {
         case -1:
 
             perrandquit();
             return -1;
         case 0:
 
-            if (execvp(child_argv[0], child_argv) == -1) {
+            if (execvp(child_argv[0], child_argv) == -1)
+            {
                 customerrorquit("Unable to exec '" +\
                         std::string(child_argv[0]) + "'");
             }
             return 0;
+
         default:
 
             PIDS.insert(child_pid);
@@ -84,11 +94,13 @@ int forkexec(const char* cmd, int& pr_count) {
     }
 }
 
-int updatechildcount(int& pr_count) {
+int updatechildcount(int& pr_count)
+{
 
     int wstatus;
     pid_t pid;
-    switch((pid = waitpid(-1, &wstatus, WNOHANG))) {
+    switch((pid = waitpid(-1, &wstatus, WNOHANG)))
+    {
         case -1:
 
             perrandquit();
@@ -104,11 +116,13 @@ int updatechildcount(int& pr_count) {
     }
 }
 
-int waitforanychild(int& pr_count) {
+int waitforanychild(int& pr_count)
+{
 
     int wstatus;
     pid_t pid;
-    switch((pid = waitpid(-1, &wstatus, 0))) {
+    switch((pid = waitpid(-1, &wstatus, 0)))
+    {
         case -1:
 
             perrandquit();
@@ -121,11 +135,13 @@ int waitforanychild(int& pr_count) {
     }
 }
 
-int waitforchildpid(int pid, int& pr_count) {
+int waitforchildpid(int pid, int& pr_count)
+{
 
     int wstatus;
     pid_t pid_exit;
-    switch((pid_exit = waitpid(pid, &wstatus, 0))) {
+    switch((pid_exit = waitpid(pid, &wstatus, 0)))
+    {
         case -1:
 
             perrandquit();
@@ -138,7 +154,8 @@ int waitforchildpid(int pid, int& pr_count) {
     }
 }
 
-void killallchildren() {
+void killallchildren()
+{
 
     for (int p : PIDS)
         if (kill(p, SIGINT) == -1)

@@ -5,7 +5,8 @@
 
 enum Status { CLAIM, TERM, REQ, REL };
 
-typedef struct {
+typedef struct
+{
     int pid;
     Status status;
     int resarray[20];
@@ -14,7 +15,8 @@ typedef struct {
     pid_t realpid;
 }Data;
 
-struct pcbmsgbuf {
+struct pcbmsgbuf
+{
     long mtype;
     Data data;
 };

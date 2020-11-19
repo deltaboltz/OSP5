@@ -11,22 +11,26 @@
 #include "sharedmemory.h"
 #include "error_handler.h"
 
-struct Descriptor {
+struct Descriptor
+{
     int avail = 0;
     int claim[18];
     int alloc[18];
     bool shareable = false;
 
-    Descriptor(int instances, bool share) {
+    Descriptor(int instances, bool share)
+    {
         avail = instances;
         shareable = share;
-        for (int i : prange) {
+        for (int i : prange)
+        {
             claim[i] = 0;
             alloc[i] = 0;
         }
     }
 
-    Descriptor(const Descriptor& old) {
+    Descriptor(const Descriptor& old)
+    {
         avail = old.avail;
         shareable = old.shareable;
         for (int i : prange) {
@@ -36,16 +40,19 @@ struct Descriptor {
     }
 };
 
-struct resman {
+struct resman
+{
     Descriptor* desc;
     bool started[18];
     int* sysmax;
     std::bitset<18> bitmap;
 
-    resman(int& currID) {
+    resman(int& currID)
+    {
         desc = (Descriptor*)shmcreate(sizeof(Descriptor)*20, currID);
         sysmax = (int*)shmcreate(sizeof(int)*20, currID);
-        for (int i : drange) {
+        for (int i : drange)
+        {
             desc[i] = Descriptor(1 + rand() % 10, false);
             sysmax[i] = desc[i].avail;
         }

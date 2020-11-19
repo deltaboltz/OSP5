@@ -5,10 +5,12 @@
 
 #include "util.h"
 
-const int* range::begin() {
+const int* range::begin()
+{
     return ptr;
 }
 
-const int* range::end() {
+const int* range::end()
+{
     return &(this->data[this->size]);
 }

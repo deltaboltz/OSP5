@@ -6,7 +6,8 @@
 #include <iostream>
 #include "help_handler.h"
 
-void printhelp(std::string progname) {
+void printhelp(std::string progname)
+{
 
     std::cout << "\nUsage: ";
     std::cout << progname << " [OPTION]...\n";

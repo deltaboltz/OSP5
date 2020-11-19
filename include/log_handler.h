@@ -12,13 +12,15 @@ struct Log {
     int maxlinecount;
     bool verbose;
 
-    Log(std::string logpath, int max, bool verb) {
+    Log(std::string logpath, int max, bool verb)
+    {
         logfile = File(logpath, APPEND);
         maxlinecount = max;
         verbose = verb;
     }
 
-    Log(const Log& old) {
+    Log(const Log& old)
+    {
         logfile = old.logfile;
         linecount = old.linecount;
         maxlinecount = old.maxlinecount;

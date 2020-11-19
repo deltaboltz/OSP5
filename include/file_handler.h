@@ -5,29 +5,28 @@
 #include <string>
 #include "error_handler.h"
 
-enum IOMODE {
+enum IOMODE
+{
     READ=std::fstream::in,
     WRITE=std::fstream::out,
     APPEND=std::fstream::app
 };
 
-struct File {
+struct File
+{
     std::string name;
-    std::fstream* stream;
     std::ios_base::openmode mode;
 
     File() {};
-    File(std::string filepath, IOMODE open_mode) {
+    File(std::string filepath, IOMODE open_mode)
+    {
         name = filepath;
-        //mode = (std::ios_base::openmode)open_mode;
-        //stream = new std::fstream(name.c_str(), mode);
-        if (!stream->is_open())
-            customerrorquit("Unable to open file '" + name + "'!");
+        mode = (std::ios_base::openmode)open_mode;
     }
 
-    File(const File& old) {
+    File(const File& old)
+    {
         name = old.name;
-        stream = old.stream;
         mode = old.mode;
     }
 

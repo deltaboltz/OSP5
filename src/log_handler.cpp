@@ -9,29 +9,35 @@
 #include "util.h"
 #include "log_handler.h"
 
-void Log::logline(std::string msg, bool force) {
-    if (force || this->linecount < this->maxlinecount) {
+void Log::logline(std::string msg, bool force)
+{
+    if (force || this->linecount < this->maxlinecount)
+    {
         this->logfile.writeline(msg);
         this->linecount++;
     }
 }
 
-void Log::logNewPID(clk* shclk, int pid, int max_count) {
+void Log::logNewPID(clk* shclk, int pid, int max_count)
+{
     this->logline(shclk->tostring() + ": Created PID " +
             std::to_string(pid) + " (" + std::to_string(max_count) + "/40)");
 }
 
-void Log::logMaxClaim(clk* shclk, Data d) {
+void Log::logMaxClaim(clk* shclk, Data d)
+{
     std::string out = shclk->tostring() + ": PID " + std::to_string(d.pid) +
         " Max Claim: [";
-    for (int i : range(19)) {
+    for (int i : range(19))
+    {
         out += std::to_string(d.resarray[i]) + ", ";
     }
     out += std::to_string(d.resarray[19]) + "]";
     this->logline(out);
 }
 
-std::string logReqBaseMsg(clk* shclk, Data d) {
+std::string logReqBaseMsg(clk* shclk, Data d)
+{
     return shclk->tostring() + ": PID " + std::to_string(d.pid) +
         " requested " + std::to_string(d.resamount) + " of R" +
         std::to_string(d.resi) + " and was ";

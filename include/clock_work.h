@@ -4,11 +4,13 @@
 #include <stdlib.h>
 #include <string>
 
-struct clk{
+struct clk
+{
     long clk_s;
     long clk_n;
 
-    clk() {
+    clk()
+    {
         clk_s = 0;
         clk_n = 0;
     }
