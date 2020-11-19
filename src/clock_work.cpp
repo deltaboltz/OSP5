@@ -5,10 +5,10 @@
 
 #include <ctime>
 #include <cstring>
+#include "util.h"
 #include "clock_work.h"
 
 float clk::tofloat()
-
 {
     return this->clk_s + (float)this->clk_n/(float)1e9;
 }
@@ -16,7 +16,9 @@ float clk::tofloat()
 std::string clk::tostring()
 {
     char buf[256];
+
     sprintf(buf, "%ld.%09ld", this->clk_s, this->clk_n);
+
     return std::string(buf);
 }
 
@@ -45,13 +47,11 @@ void clk::inc(long ns)
 void clk::dec(long ns)
 {
     this->clk_n -= ns;
-    while (this->clk_n < 0)
-    {
+    while (this->clk_n < 0) {
         this->clk_n += 1e9;
         this->clk_s -= 1;
     }
-    if (this->clk_s < 0)
-    {
+    if (this->clk_s < 0) {
         this->clk_n = 0;
         this->clk_s = 0;
     }
@@ -71,16 +71,9 @@ long clk::tonano()
     return this->clk_s*1e9 + this->clk_n;
 }
 
-std::string epochstr()
+std::string ClockPadding(clk* shclk)
 {
-
-    return std::to_string(time(0));
-}
-
-long floattimetonano(float time)
-{
-
-    long s = (long)time;
-    long n = (long)((time - s) * 1e9);
-    return s*1e9 + n;
+    std::string out = "  ";
+    for (int i : range(shclk->tostring().size())) out += " ";
+    return out;
 }

@@ -13,7 +13,6 @@ std::string prefix;
 
 void setupprefix(std::string arg0)
 {
-
     prefix = arg0;
     rawprefix = arg0;
     prefix += ": Error";
@@ -21,7 +20,6 @@ void setupprefix(std::string arg0)
 
 void perrandquit()
 {
-
     perror(prefix.c_str());
     ipc_cleanup();
     exit(-1);
@@ -29,7 +27,6 @@ void perrandquit()
 
 void customerrorquit(const char* error)
 {
-
     std::cerr << prefix << ": " << error << "\n";
     ipc_cleanup();
     exit(-1);
@@ -43,7 +40,6 @@ void customerrorquit(std::string error)
 
 void custerrhelpprompt(const char* error)
 {
-
     std::cerr << prefix << ": " << error << "\n";
     std::cerr << "Please run '" << rawprefix;
     std::cerr << " -h' for more assistance!\n\n";
@@ -59,7 +55,8 @@ void custerrhelpprompt(std::string error)
 
 void pathdeperror()
 {
-
     customerrorquit(
-        std::string("One or more dependentent binaries is ") + std::string("missing, please ensure that you are ") + std::string("running the program from a valid path!\n"));
+        std::string("One or more dependentent binaries is ") +\
+        std::string("missing, please ensure that you are ") +\
+        std::string("running the program from a valid path!\n"));
 }

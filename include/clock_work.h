@@ -1,7 +1,6 @@
 #ifndef CLOCK_WORK_H
 #define CLOCK_WORK_H
 
-#include <stdlib.h>
 #include <string>
 
 struct clk
@@ -25,7 +24,6 @@ struct clk
     float nextrand(long maxns);
 };
 
-std::string epochstr();
-long floattimetonano(float time);
+std::string ClockPadding(clk* shclk);
 
 #endif

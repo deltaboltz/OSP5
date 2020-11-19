@@ -8,11 +8,9 @@
 
 void printhelp(std::string progname)
 {
-
     std::cout << "\nUsage: ";
     std::cout << progname << " [OPTION]...\n";
-    std::cout << "Creates children and simulates resource management and";
-    std::cout << " deadlock avoidance algorithms.\n";
+    std::cout << "Used to simulate resource management and deadlock avoidance \n";
 
     std::cout << "\n  -v        \tSets logging to verbose mode.";
 

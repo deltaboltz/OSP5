@@ -18,6 +18,7 @@ struct File
     std::ios_base::openmode mode;
 
     File() {};
+
     File(std::string filepath, IOMODE open_mode)
     {
         name = filepath;

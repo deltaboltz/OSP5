@@ -12,12 +12,15 @@ void resman::stateclaim(int PID, int resclaim[20])
     {
         this->desc[i].claim[PID] = resclaim[i];
     }
+
     started[PID] = true;
 }
 
 bool resman::isSafe()
 {
+    this->lastBlockTest.clear();
     int currentavail[20];
+
     for (int i : range(20))
     {
         currentavail[i] = this->desc[i].avail;
@@ -33,12 +36,12 @@ bool resman::isSafe()
     while(!0)
     {
         bool claimsatisfied = false;
-
         for (int PID : range(18))
         {
             if (running[PID])
             {
                 claimsatisfied = true;
+
                 for (int descID : range(20))
                 {
                     if (this->desc[descID].claim[PID] -
@@ -47,19 +50,42 @@ bool resman::isSafe()
                           claimsatisfied = false;
                         }
                 }
+
                 if (claimsatisfied)
                 {
                     for (int descID : range(20))
-                        currentavail[descID] += this->desc[descID].alloc[PID];
+                    {
+                      currentavail[descID] += this->desc[descID].alloc[PID];
+                    }
+
                     running[PID] = false;
                     break;
                 }
             }
         }
-        if (!claimsatisfied) return false;
+        if (!claimsatisfied)
+        {
+            for (int PID : range(18))
+            {
+                if (running[PID] && this->started[PID])
+                {
+                    this->lastBlockTest.push_back(PID);
+                }
+            }
+            return false;
+        }
+
         bool nonerunning = true;
-        for (int PID : range(18)) nonerunning &= !running[PID];
-        if (nonerunning) return true;
+
+        for (int PID : range(18))
+        {
+          nonerunning &= !running[PID];
+        }
+
+        if (nonerunning)
+        {
+          return true;
+        }
     }
 }
 
@@ -74,6 +100,12 @@ int resman::allocate(int PID, int descID, int instances)
         this->desc[descID].claim[PID])
     {
         customerrorquit("PID " + std::to_string(PID) + " requested " + std::to_string(instances) + " of R" + std::to_string(descID) + " but has a maximum claim of " + std::to_string(this->desc[descID].claim[PID]));
+    }
+
+    if (this->desc[descID].shareable)
+    {
+        this->desc[descID].alloc[PID] += instances;
+        return 0;
     }
 
     if (instances > this->desc[descID].avail)
@@ -105,41 +137,17 @@ void resman::release(int PID, int descID)
 void resman::release(int PID, int descID, int instances)
 {
     this->desc[descID].alloc[PID] -= instances;
-    this->desc[descID].avail += instances;
-}
 
-void resman::printAlloc()
-{
-
-    printf("    ");
-    for (int j : range(20))
+    if (!this->desc[descID].shareable)
     {
-        printf("R%-2d ", j);
-    }
-    printf("\n");
-    printf("A   ");
-    for (int j : range(20))
-    {
-      printf("%2d  ", this->desc[j].avail);
-    }
-
-    printf("\n");
-    for (int PID : range(18))
-    {
-        printf("P%-2d ", PID);
-
-        for (int descID : range(20))
-        {
-            printf("%2d  ", this->desc[descID].alloc[PID]);
-        }
-
-        printf("\n");
+        this->desc[descID].avail += instances;
     }
 }
 
 int resman::findfirstunset()
 {
     for (int i : range(18)) if (!this->bitmap[i]) return i;
+
     return -1;
 }
 
@@ -154,4 +162,5 @@ void resman::findandsetpid(int& pid)
 void resman::unsetpid(int pid)
 {
     this->bitmap.reset(pid);
+    this->started[pid] = false;
 }

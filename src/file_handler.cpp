@@ -10,17 +10,13 @@
 
 int File::readline(std::string& outstr)
 {
-  std::ifstream stream(this->name.cstr(), this->mode);
 
-  if(std::getline(stream, outstr))
-  {
-    return 1;
-  }
+    std::ifstream stream(this->name.c_str(), this->mode);
 
-  if(stream.bad())
-  {
-    customerrorquit("Unable to read file");
-  }
+    if (std::getline(stream, outstr)) return 1;
+
+    if (stream.bad()) customerrorquit("Unable to read from file");
+    return 0;
 }
 
 void File::writeline(std::string line)
@@ -30,15 +26,11 @@ void File::writeline(std::string line)
 
 void File::write(std::string msg)
 {
-
     std::ofstream stream(this->name.c_str(), this->mode);
 
     stream << msg;
+    if (stream.bad()) customerrorquit("Unable to write to file");
 
-    if (this->stream->bad())
-    {
-      customerrorquit("Unable to write to file");
-    }
 
-    this->stream->flush();
+    stream.flush();
 }

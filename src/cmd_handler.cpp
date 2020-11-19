@@ -22,11 +22,13 @@ char* getoptstr(const char* options, const char* flags)
 
     optstr[0] = ':';
     int i = 1;
+
     for (int j : range(optlen))
     {
         optstr[i++] = options[j];
         optstr[i++] = ':';
     }
+
     for (int j : range(flglen))
     {
         optstr[i++] = flags[j];
@@ -34,7 +36,9 @@ char* getoptstr(const char* options, const char* flags)
     return optstr;
 }
 
-int getcliarg(int argc, char** argv, const char* options, const char* flags, std::vector<std::string> &optout, bool* flagout)
+int getcliarg(int argc, char** argv, const char* options, \
+              const char* flags, std::vector<std::string> &optout, \
+              bool* flagout)
 {
 
     char* optstr = getoptstr(options, flags);
@@ -43,7 +47,8 @@ int getcliarg(int argc, char** argv, const char* options, const char* flags, std
 
     while ((c = getopt(argc, argv, optstr)) != -1)
     {
-        if (c == '?') {
+        if (c == '?')
+        {
             custerrhelpprompt("Unknown argument '-" +\
                     std::string(1, (char)optopt) +    "'");
         }
@@ -54,6 +59,7 @@ int getcliarg(int argc, char** argv, const char* options, const char* flags, std
         }
 
         int optindex = -1;
+
         for (int j : range((int)strlen(options)))
         {
             if (c == options[j])
@@ -64,13 +70,12 @@ int getcliarg(int argc, char** argv, const char* options, const char* flags, std
                 break;
             }
         }
-        if (optindex == -1) {
-
+        if (optindex == -1)
+        {
             for (int j : range((int)strlen(flags)))
             {
                 if (c == flags[j])
                 {
-
                     flagout[j] = true;
                     break;
                 }
@@ -84,8 +89,10 @@ int getcliarg(int argc, char** argv, const char* options, const char* flags, std
 void parserunpath(char** argv, std::string& runpath, std::string& pref)
 {
 
+
     std::string rawpath = argv[0];
     size_t split = rawpath.rfind('/')+1;
+
     if (split != 0)
     {
         runpath = rawpath.substr(0, split);
@@ -100,7 +107,6 @@ void parserunpath(char** argv, std::string& runpath, std::string& pref)
 
 bool pathdepcheck(std::string runpath, std::string depname)
 {
-
     struct stat buffer;
     std::string depcheck = runpath + depname;
     if (stat(depcheck.c_str(), &buffer) == 0) return true;

@@ -20,9 +20,11 @@
 #include "log_handler.h"
 #include "util.h"
 
+
 volatile bool earlyquit = false;
 volatile bool handlinginterrupt = false;
 volatile int quittype = 0;
+
 
 void signalhandler(int signum)
 {
@@ -56,13 +58,16 @@ void testopts(int argc, char** argv, std::string pref, int optind, bool* flags)
         exit(0);
     }
 
-    if (argc > optind) custerrhelpprompt(
-        "Unknown argument '" + std::string(argv[optind]) + "'");
+    if (argc > optind)
+    {
+      custerrhelpprompt("Unknown argument '" + std::string(argv[optind]) + "'");
+    }
 }
 
-void unblockAfterRelease(clk* shclk, resman& r, std::list<Data>& blocked, Log log)
+void unblockAfterRelease(clk* shclk, resman& r, std::list<Data>& blocked, Log& log)
 {
     auto i = blocked.begin();
+
     while (i != blocked.end())
     {
         if (r.allocate((*i).pid, (*i).resi, (*i).resamount) == 0)
@@ -78,13 +83,15 @@ void unblockAfterRelease(clk* shclk, resman& r, std::list<Data>& blocked, Log lo
     }
 }
 
-void main_loop(std::string runpath, Log log)
+void main_loop(std::string runpath, Log& log)
 {
     int max_count = 0;
     int conc_count = 0;
     int currID = 0;
     int spawnConst = 500000000;
     int pid;
+    int reqs = 0;
+
     srand(getpid());
 
     clk* shclk = (clk*)shmcreate(sizeof(clk), currID);
@@ -98,18 +105,25 @@ void main_loop(std::string runpath, Log log)
 
     while (!earlyquit)
     {
-        if (max_count >= 40 && conc_count == 0) earlyquit = true;
+        if (max_count >= 40 && conc_count == 0)
+        {
+          earlyquit = true;
+        }
         if (shclk->tofloat() >= nextSpawnTime && max_count < 40)
         {
             r.findandsetpid(pid);
             if (pid >= 0)
             {
                 log.logNewPID(shclk, pid, ++max_count);
+
                 forkexec(runpath + "user " + std::to_string(pid), conc_count);
+
                 nextSpawnTime = shclk->nextrand(spawnConst);
             }
         }
+
         buf->mtype = 1;
+
         if (msgreceivenw(1, buf))
         {
             if (buf->data.status == CLAIM)
@@ -120,22 +134,35 @@ void main_loop(std::string runpath, Log log)
             }
             else if (buf->data.status == REQ)
             {
-                int allocated = r.allocate(
-                        buf->data.pid, buf->data.resi, buf->data.resamount);
+                reqs++;
+
+                int allocated = r.allocate(buf->data.pid, buf->data.resi, buf->data.resamount);
                 if (allocated == 0)
                 {
                     msgsend(1, buf->data.pid+2);
-                    log.logReqGranted(shclk, buf->data);
+                    log.logReqGranted(
+                        shclk, buf->data,
+                        r.desc[buf->data.resi].shareable,
+                        r.lastBlockTest);
+
                 }
                 else if (allocated == 1)
                 {
                     blockedRequests.push_back(buf->data);
-                    log.logReqDenied(shclk, buf->data);
+                    log.logReqDenied(
+                        shclk, buf->data, r.desc[buf->data.resi].shareable);
                 }
                 else if (allocated == 2)
                 {
                     blockedRequests.push_back(buf->data);
-                    log.logReqDeadlock(shclk, buf->data);
+                    log.logReqDeadlock(
+                        shclk, buf->data,
+                        r.desc[buf->data.resi].shareable,
+                        r.lastBlockTest);
+                }
+                if (reqs % 20 == 19)
+                {
+                    log.logAlloc(r.desc, r.sysmax);
                 }
             }
             else if (buf->data.status == REL)
@@ -151,14 +178,17 @@ void main_loop(std::string runpath, Log log)
                 {
                     r.release(buf->data.pid, i, r.desc[i].alloc[buf->data.pid]);
                 }
-
                 waitforchildpid(buf->data.realpid, conc_count);
+
                 r.unsetpid(buf->data.pid);
+
                 log.logTerm(shclk, buf->data, blockedRequests.size());
                 unblockAfterRelease(shclk, r, blockedRequests, log);
+
             }
         }
-        else {
+        else
+        {
 
         }
         shclk->inc(2e5);
@@ -170,7 +200,8 @@ void main_loop(std::string runpath, Log log)
 
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
 
     signal(SIGINT, signalhandler);
     signal(SIGALRM, signalhandler);
@@ -178,7 +209,10 @@ int main(int argc, char** argv) {
     std::string runpath, pref;
     parserunpath(argv, runpath, pref);
     setupprefix(pref);
-    if (!pathdepcheck(runpath, "user")) pathdeperror();
+    if (!pathdepcheck(runpath, "user"))
+    {
+      pathdeperror();
+    }
 
     std::vector<std::string> opts{};
     bool flags[2] = {false, false};

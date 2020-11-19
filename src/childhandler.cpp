@@ -19,14 +19,14 @@
 
 std::set<pid_t> PIDS;
 
-char** makeargv(std::string line, int& size)
-{
+char** makeargv(std::string line, int& size) {
+
+
 
     std::istringstream iss(line);
     std::vector<std::string> argvector;
     while (iss)
     {
-
         std::string sub;
         iss >> sub;
         argvector.push_back(sub);
@@ -34,12 +34,13 @@ char** makeargv(std::string line, int& size)
 
     size = argvector.size();
     char** out = new char*[size];
+
     for (int i : range(size-1))
     {
-
         out[i] = new char[argvector[i].size()];
         strcpy(out[i], argvector[i].c_str());
     }
+
 
     out[size-1] = nullptr;
     return out;
@@ -70,12 +71,14 @@ int forkexec(const char* cmd, int& pr_count)
 
     char** child_argv = makeargv(cmd, child_argc);
     const pid_t child_pid = fork();
+
     switch(child_pid)
     {
         case -1:
 
             perrandquit();
             return -1;
+
         case 0:
 
             if (execvp(child_argv[0], child_argv) == -1)
@@ -97,19 +100,19 @@ int forkexec(const char* cmd, int& pr_count)
 int updatechildcount(int& pr_count)
 {
 
+
     int wstatus;
     pid_t pid;
     switch((pid = waitpid(-1, &wstatus, WNOHANG)))
     {
         case -1:
-
             perrandquit();
             return -1;
+
         case 0:
-
             return 0;
-        default:
 
+        default:
             PIDS.erase(pid);
             pr_count--;
             return pid;
@@ -118,17 +121,15 @@ int updatechildcount(int& pr_count)
 
 int waitforanychild(int& pr_count)
 {
-
     int wstatus;
     pid_t pid;
     switch((pid = waitpid(-1, &wstatus, 0)))
     {
         case -1:
-
             perrandquit();
             return -1;
-        default:
 
+        default:
             PIDS.erase(pid);
             pr_count--;
             return pid;
@@ -140,14 +141,14 @@ int waitforchildpid(int pid, int& pr_count)
 
     int wstatus;
     pid_t pid_exit;
+
     switch((pid_exit = waitpid(pid, &wstatus, 0)))
     {
         case -1:
-
             perrandquit();
             return -1;
-        default:
 
+        default:
             PIDS.erase(pid);
             pr_count--;
             return pid;

@@ -1,32 +1,28 @@
-Author: Connor Schultz
-Date:   November 5, 2020
+How to run
 
-Compilation:
-    The Makefile for this project will create the following:
-        bin/oss
-        bin/user
+make clean:
+	This will clean up any left over binary and executables sent in from make
 
-        The default recipe 'make' will build both of these executables.
-        'make clean' will delete obj/ and bin/, including all files within
-        'make cleanrun' will delete bin/*.out and bin/*.log
-
-Running the program:
-        oss [OPTIONS]
-
-        -h  : Display a MAN-Page style help message
-
-        -v  : Set logging to verbose mode
+make:
+	This will create a new directory and put the executables inside this directory
 
 
-Version Control:
-    This project's version control has been managed under git. For a log of
-    modifications, use 'git log', and its various options.
+bin/oss:
+	This will run the main program, it will write to a unique log file, the log name will be printed
+	at the end of the program. Make sure to read that unique file.
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!!!!!!!!DO NOT RUN WITHOUT bin/ before!!!!!!!!!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Outstanding Problems:
-    None, to my knowledge
+Version Control - GitHub
 
-Encountered Difficulties:
-    None worth mentioning
+git log:
+	Will show the unique log for this project.
+  This project was cloned from my previous OSS-Scheduler to include new files
 
-Bugtesting efforts:
-    Running oss and looking at the log to make sure everything makes sense
+Changes to Files:
+
+Throughout the project I have changed many of the file layouts for readability,
+flexibility, ease of typing, etc.
+
+Some files may have been modified in order to fit this new criteria

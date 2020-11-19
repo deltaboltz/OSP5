@@ -1,5 +1,5 @@
-#ifndef CHILDHANDLER_H
-#define CHILDHANDLER_H
+#ifndef CHILD_HANDLER_H
+#define CHILD_HANDLER_H
 
 #include <string>
 
@@ -10,8 +10,8 @@ int forkexec(std::string cmd, int& pr_count);
 int forkexec(const char* cmd, int& pr_count);
 
 int updatechildcount(int& pr_count);
-
 int waitforanychild(int& pr_count);
+
 int waitforchildpid(int pid, int& pr_count);
 
 void killallchildren();
