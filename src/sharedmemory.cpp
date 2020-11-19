@@ -1,6 +1,7 @@
-//
-// Created by connor on 10/26/2020.
-//
+/* Author:      Zoya Samsonov
+ * Created:     October 6, 2020
+ * Last edit:   November 5, 2020
+ */
 
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -10,325 +11,248 @@
 #include <string>
 #include <cstring>
 #include <set>
-#include <errno.h>
-#include <cerrno>
-#include "errors.h"
+#include "error_handler.h"
+#include "file_handler.h"
+#include "util.h"
 #include "sharedmemory.h"
-#include "filehandler.h"
 
 std::set<int> shmsegments;
 std::set<int> semaphores;
 std::set<int> msgqueues;
 
-struct msgbuffer
-{
+struct msgbuffer {
     long mtype;
 };
 
-key_t getkeyfromid(int keyID)
-{
-    key_t key = ftok(".", keyID);
-    if (key == -1)
-    {
-        perrorquit();
-    }
+key_t getkeyfromid(int key_id) {
+
+    key_t key = ftok(".", key_id);
+    if (key == -1) perrandquit();
     return key;
 }
 
-int shmlookID(int keyID)
-{
-    int shmid = shmget(getkeyfromid(keyID), 0, 0);
-    if (shmid == -1)
-    {
-        perrorquit();
-    }
+int shmlookupid(int key_id) {
+
+    int shmid = shmget(getkeyfromid(key_id), 0, 0);
+    if (shmid == -1) perrandquit();
     return shmid;
 }
 
+void* shmcreate(size_t bytes, int& key_id) {
 
-void* shmlook(int keyID)
-{
-    void* ataddr = shmat(shmlookID(keyID), NULL, 0);
-    if(ataddr == (void*)-1)
-    {
-        perrorquit();
-    }
-    return ataddr;
-}
+    int shmid = shmget(getkeyfromid(key_id++), bytes, IPC_CREAT|IPC_EXCL|0660);
 
-void* shmcreate(size_t bytes, int& keyID)
-{
-    int shmid = shmget(getkeyfromid(keyID++), bytes, IPC_CREAT|IPC_EXCL|0660);
+    if (shmid == -1) perrandquit();
 
-    if(shmid == -1)
-    {
-        perrorquit();
-    }
     shmsegments.insert(shmid);
 
     void* ataddr = shmat(shmid, NULL, 0);
 
-    if(ataddr == ((void*)-1))
-    {
-        perrorquit();
-    }
+    if (ataddr == (void*)-1) perrandquit();
+
     return ataddr;
 }
 
-void shmdetach(const void* ptr)
-{
-    if(shmdt(ptr) == -1)
-    {
-        perrorquit();
-    }
+void* shmlookup(int key_id) {
+
+    void* ataddr = shmat(shmlookupid(key_id), NULL, 0);
+    if (ataddr == (void*)-1) perrandquit();
+
+    return ataddr;
 }
 
-void shmdestroy(int keyID)
-{
-    if(shmctl(shmlookID(keyID), IPC_RMID, NULL) == -1)
-    {
-        perrorquit();
-    }
+void shmdetach(const void* shmptr) {
+
+    if (shmdt(shmptr) == -1) perrandquit();
 }
 
-int semcreate(int num, int& keyID)
-{
-    int semID = semget(getkeyfromid(keyID++), num, IPC_CREAT|IPC_EXCL|0660);
+void shmdestroy(int key_id) {
 
-    if(semID == -1)
-    {
-        perrorquit();
-    }
-
-    semaphores.insert(semID);
-
-    return semID;
+    if (shmctl(shmlookupid(key_id), IPC_RMID, NULL) == -1) perrandquit();
 }
 
-int semlook(int keyID)
-{
-    int semID = semget(getkeyfromid(keyID), 0, 0);
+int semcreate(int num, int& key_id) {
 
-    if(semID == -1)
-    {
-        perrorquit();
-    }
+    int semid = semget(getkeyfromid(key_id++), num, IPC_CREAT|IPC_EXCL|0660);
 
-    return semID;
+    if (semid == -1) perrandquit();
+
+    semaphores.insert(semid);
+
+    return semid;
 }
 
-void semlock(int semID, int semNum)
-{
+int semlookup(int key_id) {
+
+    int semid = semget(getkeyfromid(key_id), 0, 0);
+    if (semid == -1) perrandquit();
+
+    return semid;
+}
+
+void semlock(int semid, int semnum) {
+
     struct sembuf op;
-    op.sem_num = 1;
+    op.sem_num = semnum;
+    op.sem_op = -1;
     op.sem_flg = 0;
+    if (semop(semid, &op, 1) == -1 && errno != 4) {
 
-    if(semop(semID, &op, 1) == -1)
-    {
-        perrorquit();
+        perrandquit();
     }
 }
 
-void semunlock(int semID, int semNum)
-{
+void semunlock(int semid, int semnum) {
+
     struct sembuf op;
-    op.sem_num = semNum;
+    op.sem_num = semnum;
     op.sem_op = 1;
     op.sem_flg = 0;
 
-    if(semop(semID, &op, 1) == -1)
-    {
-        perrorquit();
-    }
+    if (semop(semid, &op, 1) == -1) perrandquit();
 }
 
-void semlockall(int semID, int semSize)
-{
-    struct sembuf op[semSize];
+void semunlockall(int semid, int semsize) {
 
-    for(int i = 0; i < semSize; i++)
-    {
+    struct sembuf op[semsize];
+    for ( int i = 0; i < semsize; i++) {
+        op[i].sem_num = i;
+        op[i].sem_op = 1;
+        op[i].sem_flg = 0;
+    }
+    if (semop(semid, op, semsize) == -1) perrandquit();
+}
+
+void semlockall(int semid, int semsize) {
+
+    struct sembuf op[semsize];
+    for (int i : range(semsize)) {
         op[i].sem_num = i;
         op[i].sem_op = -1;
         op[i].sem_flg = 0;
     }
-
-    if(semop(semID, op, semSize) == -1)
-    {
-        perrorquit();
-    }
+    if (semop(semid, op, semsize) == -1) perrandquit();
 }
 
-void semdestroy(int semID)
-{
-    if(semctl(semID, 0, IPC_RMID) == -1)
-    {
-        perrorquit();
-    }
+void semdestroy(int semid) {
+
+    if (semctl(semid, 0, IPC_RMID) == -1) perrandquit();
 }
 
-void msgcreate(int& keyID)
-{
-    int msqID = msgget(getkeyfromid(keyID++), IPC_CREAT|IPC_EXCL|0660);
+void msgcreate(int& key_id) {
 
-    if(msqID == -1)
-    {
-        perrorquit();
-    }
+    int msqid = msgget(getkeyfromid(key_id++), IPC_CREAT|IPC_EXCL|0660);
 
-    msgqueues.insert(msqID);
+    if (msqid == -1) perrandquit();
+
+    msgqueues.insert(msqid);
 }
 
-int msggetID(int keyID)
-{
-    int msqID;
-    if((msqID = msgget(getkeyfromid(keyID), 0660)) == -1)
-    {
-        perrorquit();
-    }
-    return msqID;
+int msglookupid(int key_id) {
+
+    int msqid = msgget(getkeyfromid(key_id), 0660);
+    if (msqid == -1) perrandquit();
+    return msqid;
 }
 
-void msgsend(int keyID)
-{
+void msgsend(int key_id) {
+
     struct msgbuffer buf;
     buf.mtype = 1;
-
-    if(msgsnd(msggetID(keyID), &buf, 0 ,0) == -1)
-    {
-        perrorquit();
-    }
+    if (msgsnd(msglookupid(key_id), &buf, 0, 0) == -1) perrandquit();
 }
 
-void msgsend(int keyID, int mtype)
-{
+void msgsend(int key_id, int mtype) {
+
     struct msgbuffer buf;
     buf.mtype = mtype;
-
-    if(msgsnd(msggetID(keyID), &buf, 0 ,0) == -1)
-    {
-        perrorquit();
-    }
+    if (msgsnd(msglookupid(key_id), &buf, 0, 0) == -1) perrandquit();
 }
 
-void msgsend(int keyID, pcbmsgbuffer* buf)
-{
-    if (msgsnd(msggetID(keyID), buf, sizeof(buf->data), 0) == -1)
-    {
-        perrorquit();
-    }
+void msgsend(int key_id, pcbmsgbuf* buf) {
+
+    if (msgsnd(msglookupid(key_id), buf, sizeof(buf->data), 0) == -1)
+        perrandquit();
 }
 
-void msgreceive(int keyID)
-{
+void msgreceive(int key_id) {
+
     struct msgbuffer buf;
 
-    if(msgrcv(msggetID(keyID), &buf, 0, 0, 0) == -1)
-    {
-        perrorquit();
-    }
+    if (msgrcv(msglookupid(key_id), &buf, 0, 0, 0) == -1 && errno != EINTR)
+        perrandquit();
 }
 
-void msgreceive(int keyID, int mtype)
-{
+void msgreceive(int key_id, int mtype) {
+
     struct msgbuffer buf;
-    if (msgrcv(msggetID(keyID), &buf, 0, mtype, 0) == -1 && errno != EINTR)
-    {
-        perrorquit();
-    }
+
+    if (msgrcv(msglookupid(key_id), &buf, 0, mtype, 0) == -1 && errno != EINTR)
+        perrandquit();
 }
 
-void msgreceive(int key_id, pcbmsgbuffer* buf) {
+void msgreceive(int key_id, pcbmsgbuf* buf) {
+
     if (msgrcv(
-        msggetID(key_id), buf, sizeof(buf->data), buf->mtype, 0) == -1 && errno != EINTR)
-            perrorquit();
+        msglookupid(key_id), buf, sizeof(buf->data), buf->mtype, 0) == -1 &&
+            errno != EINTR)
+                perrandquit();
 }
 
-bool msgreceivenw(int keyID)
-{
+bool msgreceivenw(int key_id) {
+
     struct msgbuffer buf;
-
-    if(msgrcv(msggetID(keyID), &buf, 0, 0, IPC_NOWAIT) == -1 && errno != EINTR)
-    {
-        if(errno != ENOMSG)
-        {
-            perrorquit();
-        }
-        else
-        {
+    if (msgrcv(msglookupid(key_id), &buf, 0, 0, IPC_NOWAIT) == -1) {
+        if (errno != ENOMSG) {
+            perrandquit();
+        } else {
             return false;
         }
     }
-
     return true;
 }
 
-bool msgreceivenw(int keyID, pcbmsgbuffer* buf)
-{
-    if(msgrcv(msggetID(keyID), buf, sizeof(buf->data), buf->mtype, IPC_NOWAIT) == -1)
-    {
-        if(errno != ENOMSG)
-        {
-            perrorquit();
-        }
-        else
-        {
+bool msgreceivenw(int key_id, int mtype) {
+
+    struct msgbuffer buf;
+    if (msgrcv(msglookupid(key_id), &buf, 0, mtype, IPC_NOWAIT) == -1) {
+        if (errno != ENOMSG) {
+            perrandquit();
+        } else {
             return false;
         }
     }
-
     return true;
 }
 
-bool msgrecwithdatanw(int keyID, int pcbnum)
-{
-    struct pcbmsgbuffer* buf = new pcbmsgbuffer;
+bool msgreceivenw(int key_id, pcbmsgbuf* buf) {
 
-    buf->data[2] = -1;
-
-    if(msgrcv(msggetID(keyID), buf, sizeof(buf->data), pcbnum+2, IPC_NOWAIT) == -1 && errno != ENOMSG)
-    {
-        perrorquit();
-    }
-
-    return buf;
-}
-
-void msgdestroy(int keyID)
-{
-    if(msgctl(msggetID(keyID), IPC_RMID, NULL) == -1)
-    {
-        perrorquit();
-    }
-}
-
-void ipc_cleanup()
-{
-    for(int shmid : shmsegments)
-    {
-        if(shmctl(shmid, IPC_RMID, NULL) == -1)
-        {
-            perrorquit();
+    if (msgrcv(msglookupid(key_id), buf, sizeof(buf->data),
+               buf->mtype, IPC_NOWAIT) == -1) {
+        if (errno != ENOMSG) {
+            perrandquit();
+        } else {
+            return false;
         }
     }
-    for(int semid : semaphores)
-    {
-        if(semctl(semid, 0, IPC_RMID) == -1)
-        {
-            perrorquit();
-        }
-    }
-    for(int msqID : msgqueues)
-    {
-        if(msgctl(msqID, IPC_RMID, NULL) == -1)
-        {
-            perrorquit();
-        }
-    }
+    return true;
 }
 
+void msgdestroy(int key_id) {
 
+    if (msgctl(msglookupid(key_id), IPC_RMID, NULL) == -1) perrandquit();
+}
 
+void ipc_cleanup() {
 
+    for (int shmid : shmsegments)
+        if (shmctl(shmid, IPC_RMID, NULL) == -1) perrandquit();
+    for (int semid : semaphores)
+        if (semctl(semid, 0, IPC_RMID) == -1) perrandquit();
+    for (int msqid : msgqueues)
+        if (msgctl(msqid, IPC_RMID, NULL) == -1) perrandquit();
 
-
+    shmsegments.clear();
+    semaphores.clear();
+    msgqueues.clear();
+}

@@ -1,185 +1,165 @@
+/* Author:      Connor Schultz
+ * Created:     September 9, 2020
+ * Last edit:   November 05, 2020
+ */
+
 #include <iostream>
 #include <string>
 #include <cstring>
 #include <unistd.h>
 #include <csignal>
 #include <vector>
-#include <bitset>
-
+#include <list>
+#include "cmd_handler.h"         
 #include "childhandler.h"
-#include "errors.h"
+#include "error_handler.h"
 #include "sharedmemory.h"
-#include "filehandler.h"
-#include "scheduler.h"
+#include "help_handler.h"
 #include "clock_work.h"
-
-
-//Comment
+#include "resource_handler.h"
+#include "log_handler.h"
+#include "util.h"
 
 volatile bool earlyquit = false;
-volatile bool interrupt = false;
-volatile int quitType = 0;
+volatile bool handlinginterrupt = false;
+volatile int quittype = 0;
 
-void sigHandle(int signum)
-{
-    if(signum == SIGALRM || signum == SIGINT)
-    {
+void signalhandler(int signum) {
+    if (signum == SIGALRM || signum == SIGINT) {
         earlyquit = true;
-        quitType = signum;
+        quittype = signum;
     }
 }
 
-void mainloop(int concurrent, std::string filename)
-{
-    //Initialize variables for the mainloop function
-    int maxCount = 0;
-    int concCount = 0;
-    int currentID = 0;
-    int logID = addout_append(filename);
-    int maxBTSs = 2;
-    int maxBTSn = 0;
+void cleanup(clk* shclk, resman r, int& conc_count) {
 
-    //set random value for pid
+    while (conc_count > 0) {
+        killallchildren();
+        updatechildcount(conc_count);
+    }
+
+    shmdetach(shclk);
+    shmdetach(r.desc);
+    shmdetach(r.sysmax);
+    ipc_cleanup();
+}
+
+void testopts(int argc, char** argv, std::string pref, int optind, bool* flags) {
+    if (flags[0]) {
+        printhelp(pref);
+        exit(0);
+    }
+
+    if (argc > optind) custerrhelpprompt(
+        "Unknown argument '" + std::string(argv[optind]) + "'");
+}
+
+void unblockAfterRelease(clk* shclk, resman& r, std::list<Data>& blocked, Log log) {
+    auto i = blocked.begin();
+    while (i != blocked.end()) {
+        if (r.allocate((*i).pid, (*i).resi, (*i).resamount) == 0) {
+            msgsend(1, (*i).pid+2);
+            log.logUnblock(shclk, (*i));
+            blocked.erase(i++);
+        } else {
+            i++;
+        }
+    }
+}
+
+void main_loop(std::string runpath, Log log) {
+    int max_count = 0;
+    int conc_count = 0;
+    int currID = 0;
+    int spawnConst = 500000000;
+    int pid;
     srand(getpid());
 
-    //attach the shared clock to the oss process
-    clck* shclock = (clck*)shmcreate(sizeof(clck), currentID);
+    clk* shclk = (clk*)shmcreate(sizeof(clk), currID);
+    float nextSpawnTime = shclk->nextrand(spawnConst);
+    msgcreate(currID);
 
-    //set the nextSpawnTime as a random through the nextrand function in clockwork.h
-    float nextSpawnTime = shclock->nextrand(maxBTSs * 1e9 + maxBTSn);
+    resman r(currID);
+    pcbmsgbuf* buf = new pcbmsgbuf;
 
-    //create the multi-level feedback queue
-    mlfq schedq;
-    //create the shared memory for the pcb table inside the mlfq
-    schedq.pcbtable = (pcb*)shmcreate(sizeof(pcb)*18, currentID);
+    std::list<Data> blockedRequests;
 
-    //create the message queue
-    msgcreate(currentID);
-
-    //create the pcb linked process
-    pcb* proc;
-
-    //Run a while loop while there is no earlyquit signal sent
-    while(!earlyquit)
-    {
-        //Check to see if the schedule queues are empty
-        if (schedq.isEmpty())
-        {
-            //If they are then check to see if we have reached 100 processes
-            if (maxCount >= 100)
-            {
-                //set earlyquit to true, leave the while loop
-                earlyquit = true;
-                quitType = 0;
+    while (!earlyquit) {
+        if (max_count >= 40 && conc_count == 0) earlyquit = true;
+        if (shclk->tofloat() >= nextSpawnTime && max_count < 40) {
+            r.findandsetpid(pid);
+            if (pid >= 0) {
+                log.logNewPID(shclk, pid, ++max_count);
+                forkexec(runpath + "user " + std::to_string(pid), conc_count);
+                nextSpawnTime = shclk->nextrand(spawnConst);
             }
-            else
-            {
-                if (shclock->tofloat() < nextSpawnTime)
-                {
-                    //If we aren't about to quit then set the next spawn time
-                    shclock->set(nextSpawnTime);
+        }
+        buf->mtype = 1;
+        if (msgreceivenw(1, buf)) {
+            if (buf->data.status == CLAIM) {
+                log.logMaxClaim(shclk, buf->data);
+                r.stateclaim(buf->data.pid, buf->data.resarray);
+                msgsend(1, buf->data.pid+2);
+            } else if (buf->data.status == REQ) {
+                int allocated = r.allocate(
+                        buf->data.pid, buf->data.resi, buf->data.resamount);
+                if (allocated == 0) {
+                    msgsend(1, buf->data.pid+2);
+                    log.logReqGranted(shclk, buf->data);
+                } else if (allocated == 1) {
+                    blockedRequests.push_back(buf->data);
+                    log.logReqDenied(shclk, buf->data);
+                } else if (allocated == 2) {
+                    blockedRequests.push_back(buf->data);
+                    log.logReqDeadlock(shclk, buf->data);
                 }
+            } else if (buf->data.status == REL) {
+                r.release(buf->data.pid, buf->data.resi, buf->data.resamount);
+                msgsend(1, buf->data.pid+2);
+                log.logRel(shclk, buf->data, blockedRequests.size());
+                unblockAfterRelease(shclk, r, blockedRequests, log);
+            } else if (buf->data.status == TERM) {
+                for (int i : range(20)) {
+                    r.release(buf->data.pid, i, r.desc[i].alloc[buf->data.pid]);
+                }
+                waitforchildpid(buf->data.realpid, conc_count);
+                r.unsetpid(buf->data.pid);
+                log.logTerm(shclk, buf->data, blockedRequests.size());
+                unblockAfterRelease(shclk, r, blockedRequests, log);
             }
+        } else {
+
         }
-
-        //Check to see if there are any active processes in the queues or none at all
-        if (!schedq.isActive() && schedq.idleStart == 0)
-        {
-            //Set out initial idle time to when this starts
-            schedq.idleStart = shclock->clockSec * 1e9 + shclock->clockNano;
-        }
-
-        //If the schedule queue for blocked is NOT empty then unblock a process
-        if (!schedq.blocked.empty())
-        {
-            unblockproc(schedq, shclock, logID);
-        }
-
-        //set the pcbnumber, index, to -1 since this'll be reserved
-        int pcbnum = -1;
-
-        //If the max count of processes and the shared clock is past the due time for spawn AND adding a process doesn't
-        //error out then we can create a new process
-        if ((maxCount < 100) && (shclock->tofloat() >= nextSpawnTime) && ((pcbnum = schedq.addProc()) != -1)) {
-            //std::cout << "Bitmap: " << schedq.bitmap << "\n"; //used for debugging
-
-            //set the process in the pcbtable at the pcbnum index
-            proc = &schedq.pcbtable[pcbnum];
-
-            //fork for a new process
-            forkexec("user " + std::to_string(pcbnum), concCount);
-
-            //Set the inception time of the new process to the clock of shared memory
-            proc->inceptTime = shclock->clockSec * 1e9 + shclock->clockNano;
-
-            //Write to the logfile that we are now spawning a new child (x/100)
-            writeline(logID, shclock->toString() + ": Spawing PID" + std::to_string(proc->pid) + " (" + std::to_string(++maxCount) + "/100)");
-
-            //Set the next spawn time
-            nextSpawnTime = shclock->nextrand(maxBTSs * 1e9 + maxBTSn);
-
-            //Print the next spawn time IF we are still below 100 processes
-            if (maxCount < 100)
-            {
-                writeline(logID, "\tNext spawn will be @: " + std::to_string(nextSpawnTime));
-            }
-        }
-
-        //Check to see if the first pcb location is not empty
-        if ((proc = schedq.getFirst()) != NULL)
-        {
-            //Check to see if the idleStart variable has a value or not
-            if (schedq.idleStart)
-            {
-                //If it does then calculate the idleTime
-                schedq.idleTime += shclock->clockSec * 1e9 + shclock->clockNano - schedq.idleStart;
-                //std::cout << "CPU Idled for: " << std::to_string(schedq.idleTime) << std::endl; // used for debugging
-
-                //reset the idleStart to 0
-                schedq.idleStart = 0;
-            }
-            //Schedule a new process
-            scheduleproc(schedq, shclock, proc, logID, concCount);
-        }
-        //increment the clock by a random value
-        shclock->increment(rand() % (long) 1e9);
+        shclk->inc(2e5);
     }
 
-    //Print the summary of the program
-    summary(schedq, shclock, quitType, filename, logID);
-
-    //If we still have children alive then wait for them to end
-    while (concCount > 0)
-    {
-        killall();
-        updatechildcount(concCount);
-    }
-
-    //Clean up out memory
-
-    shmdetach(shclock);
-    shmdetach(schedq.pcbtable);
-    ipc_cleanup();
+    std::cout << log.logExit(shclk, quittype, max_count) << "\n";
+    std::cout << "For simulation details, please see " << log.logfile.name << "\n";
+    cleanup(shclk, r, conc_count);
 
 }
 
-int main(int argc, char **argv)
-{
-    signal(SIGINT, sigHandle);
-    signal(SIGALRM, sigHandle);
-    setupprefix(argv[0]);
+int main(int argc, char** argv) {
 
-    int concurrent = 18;
+    signal(SIGINT, signalhandler);
+    signal(SIGALRM, signalhandler);
 
-    //Sets a unique logid no matter what
-    std::string filename = "output-" + epochlogid() + ".log";
+    std::string runpath, pref;
+    parserunpath(argv, runpath, pref);
+    setupprefix(pref);
+    if (!pathdepcheck(runpath, "user")) pathdeperror();
 
-    //Max time before timeout
-    int MAXTIME = 3;
-    alarm(MAXTIME);
+    std::vector<std::string> opts{};
+    bool flags[2] = {false, false};
+    int optind = getcliarg(argc, argv, "", "hv", opts, flags);
 
-    //Call mainloop
-    mainloop(concurrent, filename);
+    Log log = Log(runpath + "output-" + epochstr() + ".log", 100000, flags[1]);
+    int max_time = 5;
+
+    testopts(argc, argv, pref, optind, flags);
+
+    alarm(max_time);
+    main_loop(runpath, log);
 
     return 0;
 }

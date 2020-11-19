@@ -1,126 +1,118 @@
-//
-// Created by Connor on 10/27/2020.
-//
+/* Author:      Connor Schultz
+ * Created:     October 15, 2020
+ * Last edit:   November 5, 2020
+ */
 
 #include <iostream>
-#include <string>
-
 #include <unistd.h>
-#include <csignal>
-#include <vector>
-
-#include "errors.h"
+#include <signal.h>
 #include "sharedmemory.h"
-
-#include "scheduler.h"
+#include "error_handler.h"
+#include "file_handler.h"
 #include "clock_work.h"
+#include "resource_handler.h"
+#include "util.h"
 
 volatile bool earlyquit = false;
 
-void sigHandle(int signum)
-{
+void signalhandler(int signum) {
     exit(-1);
 }
 
-int main(int argc, char **argv)
-{
-    signal(SIGINT, sigHandle);
+int main(int argc, char **argv) {
+
+    signal(SIGINT, signalhandler);
 
     setupprefix(argv[0]);
 
     srand(getpid());
+    int pid = std::stoi(argv[1]);
 
-    clck* shclock = (clck*)shmlook(0);
-    pcb* pcbtable = (pcb*)shmlook(1);
+    clk* shclk = (clk*)shmlookup(0);
+    Descriptor* desc = (Descriptor*)shmlookup(2);
+    int* sysmax = (int*)shmlookup(3);
+    float startTime = shclk->tofloat();
+    long actConstant = 10e6;
+    float nextActionTime = shclk->nextrand(actConstant);
+    float termActionTime;
+    bool maybeTerm = false;
+    int reqChance = 55;
+    int termChance = 4;
 
-    int pcbnum = std::stoi(argv[1]);
-    //std::cout << "PCB #" << pcbnum << " started\n"; //used for debugging
+    pcbmsgbuf* buf = new pcbmsgbuf;
+    buf->mtype = 1;
+    buf->data.pid = pid;
+    buf->data.status = CLAIM;
+    for (int i : range(20)) {
+        buf->data.resarray[i] = rand() % sysmax[i];
+    }
+    msgsend(1, buf);
+    msgreceive(1, pid+2);
+    shmdetach(sysmax);
 
-    pcbmsgbuffer* msg = new pcbmsgbuffer;
-
-    //Do a while loop that is essentially infinite
-    while(1)
-    {
-        //The mtype needs to be unique to each child to send a recieve to proper children
-        msg->mtype = pcbnum + 3;
-        msgreceive(2, msg);
-
-        //If the msgrcvd is the wrong mtype then we error out
-        if(msg->data[PCBNUM] != pcbnum)
-        {
-            std::cerr << "received message not intended for child " << std::to_string(msg->data[PCBNUM]);
-            perrorquit();
+    while(!0) {
+        if (shclk->tofloat() >= startTime + 1 && !maybeTerm) {
+            maybeTerm = true;
+            termActionTime = shclk->nextrand(250e6);
         }
-
-        //If we block then we have a random time to stop "wait for an event"
-        if(pcbtable[pcbnum].blockStart != 0)
-        {
-            pcbtable[pcbnum].blockTime += shclock->clockSec * 1e9 + shclock->clockNano - pcbtable[pcbnum].blockStart - 0;
-
-            pcbtable[pcbnum].blockStart = 0;
+        if (maybeTerm && shclk->tofloat() >= termActionTime) {
+            if (rand() % termChance == 0) {
+                buf->data.status = TERM;
+                buf->data.realpid = getpid();
+                shmdetach(shclk);
+                msgsend(1, buf);
+                shmdetach(desc);
+                exit(0);
+            }
+            termActionTime = shclk->nextrand(250e6);
         }
+        if (shclk->tofloat() >= nextActionTime) {
+            if (rand() % 100 < reqChance) {
 
-        //Set the mtype to 1 to send to oss (1 is reserved for oss)
-        msg->mtype = 1;
-
-        //Check to see if we will jsut terminate right away and how much time we used before we did
-        if((rand() % 10) < 1)
-        {
-            pcbtable[pcbnum].burstTime = rand() % msg->data[TIMESLICE];
-            msg->data[STATUS] = TERM;
-
-            //Send the message to oss that we termed
-            msgsend(2, msg);
-
-            pcbtable[pcbnum].sysTime = pcbtable[pcbnum].burstTime + shclock->clockSec * 1e9 + shclock->clockNano - pcbtable[pcbnum].inceptTime;
-
-            //detach all the shared memory for this child
-            shmdetach(shclock);
-            shmdetach(pcbtable);
-            exit(0);
-        }
-        //Non-Terminating
-        else
-        {
-            /*
-             * Three options
-             *
-             * 0) Use all time slice and expire
-             *
-             * 1) We get blocked and block for a random time, move to blockQ
-             *
-             * 2) We preempt the process and only use [1,99]% of our time slice allowed and move to next Q
-             */
-            int decision = rand() % 3;
-            if(decision == 0)
-            {
-                pcbtable[pcbnum].burstTime = msg->data[TIMESLICE];
-                msg->data[STATUS] = RUN;
-                msgsend(2, msg);
+                int reqi = -1;
+                bool requestable = false;
+                for (int i : range(20))
+                    if (desc[i].claim[pid] - desc[i].alloc[pid] > 0) requestable = true;
+                if (!requestable) {
+                    nextActionTime = shclk->nextrand(actConstant);
+                    continue;
+                }
+                while (requestable && reqi < 0) {
+                    int resi = rand() % 20;
+                    if (desc[resi].claim[pid] - desc[resi].alloc[pid] > 0) {
+                        reqi = resi;
+                    }
+                }
+                int reqamount = 1 + rand() % (desc[reqi].claim[pid] - desc[reqi].alloc[pid]);
+                buf->data.status = REQ;
+                buf->data.resi = reqi;
+                buf->data.resamount = reqamount;
+                msgsend(1, buf);
+                msgreceive(1, pid+2);
+            } else {
+                int reli = -1;
+                bool releaseable = false;
+                for (int i : range(20)) {
+                    if (desc[i].alloc[pid]) {
+                        releaseable = true;
+                    }
+                }
+                if (!releaseable) {
+                    nextActionTime = shclk->nextrand(actConstant);
+                    continue;
+                }
+                while (releaseable && reli < 0) {
+                    int resi = rand() % 20;
+                    if (desc[resi].alloc[pid]) reli = resi;
+                }
+                int relamount = 1 + rand() % (desc[reli].alloc[pid]);
+                buf->data.status = REL;
+                buf->data.resi = reli;
+                buf->data.resamount = relamount;
+                msgsend(1, buf);
+                msgreceive(1, pid+2);
             }
-            else if(decision == 1)
-            {
-                pcbtable[pcbnum].burstTime = rand() % msg->data[TIMESLICE];
-                msg->data[STATUS] = BLOCK;
-                msgsend(2, msg);
-                pcbtable[pcbnum].blockStart = shclock->clockSec * 1e9 + shclock->clockNano;
-
-                float wakeuptime = shclock->nextrand(3e9);
-
-                while(shclock->tofloat() < wakeuptime);
-
-                msg->mtype = 2;
-                msg->data[STATUS] = UNBLOCK;
-                msgsend(2, msg);
-
-                msg->mtype = pcbnum+3;
-            }
-            else if(decision == 2)
-            {
-                pcbtable[pcbnum].burstTime = msg->data[TIMESLICE] / 100 * (1 + rand() % 99);
-                msg->data[STATUS] = PREEMTED;
-                msgsend(2, msg);
-            }
+            nextActionTime = shclk->nextrand(actConstant);
         }
     }
 }

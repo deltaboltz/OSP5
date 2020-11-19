@@ -1,73 +1,72 @@
-//
-// Created by Connor on 11/4/2020.
-//
-#include "clock_work.h"
+/* Author:      Connor Schultz
+ * Date:        November 3, 2020
+ * Last Edit:   November 5, 2020
+ */
+
 #include <ctime>
+#include <cstring>
+#include "clock_work.h"
 
-
-float clck::tofloat()
-{
-    return (float)this->clockSec + (float)this->clockNano/(float)1e9;
-}
-std::string clck::toString()
-{
-    int padding = 9 - std::to_string(this->clockNano).size();
-    std::string rep = std::to_string(this->clockSec) + ".";
-
-    while(padding--)
-    {
-        rep += "0";
-    }
-    return rep + std::to_string(this->clockNano);
+float clk::tofloat() {
+    return this->clk_s + (float)this->clk_n/(float)1e9;
 }
 
-void clck::increment(long nanoSeconds)
-{
-    this->clockNano += nanoSeconds;
-    while(this->clockNano > 1e9)
-    {
-        this->clockNano -= 1e9;
-        this->clockSec += 1;
-    }
+std::string clk::tostring() {
+    char buf[256];
+    sprintf(buf, "%ld.%09ld", this->clk_s, this->clk_n);
+    return std::string(buf);
 }
 
-void clck::decrement(long nanoSeconds)
-{
-    this->clockNano -= nanoSeconds;
-    while(this->clockNano < 0)
-    {
-        this->clockNano += 1e9;
-        this->clockSec -= 1;
-    }
-    if(this->clockSec)
-    {
-        this->clockSec = 0;
-        this->clockNano = 0;
+void clk::set(float time) {
+    this->clk_s = (long)time;
+    this->clk_n = (long)((time - this->clk_s) * 1e9);
+}
+
+void clk::set(std::string time) {
+    float ftime = std::stof(time);
+    this->set(ftime);
+}
+
+void clk::inc(long ns) {
+    this->clk_n += ns;
+    while (this->clk_n >= 1e9) {
+        this->clk_n -= 1e9;
+        this->clk_s += 1;
     }
 }
 
-float clck::nextrand(long maxNano) {
-    clck val;
-    val.clockSec = this->clockSec;
-    val.clockNano = this->clockNano;
-    val.increment(rand() & maxNano);
-    return val.tofloat();
+void clk::dec(long ns) {
+    this->clk_n -= ns;
+    while (this->clk_n < 0) {
+        this->clk_n += 1e9;
+        this->clk_s -= 1;
+    }
+    if (this->clk_s < 0) {
+        this->clk_n = 0;
+        this->clk_s = 0;
+    }
 }
 
-void clck::set(float time)
-{
-    this->clockSec = (long)time;
-    this->clockNano = (long)((time - this->clockSec) * 1e9);
-}
-void clck::set(std::string time)
-{
-    float time1 = std::stof(time);
-    this->set(time1);
+float clk::nextrand(long maxns) {
+    clk copy;
+    copy.clk_s = this->clk_s;
+    copy.clk_n = this->clk_n;
+    copy.inc(rand() % maxns);
+    return copy.tofloat();
 }
 
-std::string epochlogid()
-{
+long clk::tonano() {
+    return this->clk_s*1e9 + this->clk_n;
+}
+
+std::string epochstr() {
+
     return std::to_string(time(0));
 }
 
+long floattimetonano(float time) {
 
+    long s = (long)time;
+    long n = (long)((time - s) * 1e9);
+    return s*1e9 + n;
+}

@@ -1,37 +1,29 @@
-//
-// Created by Connor on 10/26/2020.
-//
-
 #ifndef CLOCK_WORK_H
 #define CLOCK_WORK_H
 
 #include <stdlib.h>
 #include <string>
 
-struct clck
-{
-    long clockSec;
-    long clockNano;
+struct clk{
+    long clk_s;
+    long clk_n;
 
-    clck()
-    {
-        clockSec = 0;
-        clockNano = 0;
+    clk() {
+        clk_s = 0;
+        clk_n = 0;
     }
 
     float tofloat();
-    std::string toString();
-
-    void increment(long nanoSeconds);
-    void decrement(long nanoSeconds);
-
-    float nextrand(long maxNano);
-
+    std::string tostring();
+    long tonano();
     void set(float time);
     void set(std::string time);
+    void inc(long ns);
+    void dec(long ns);
+    float nextrand(long maxns);
 };
 
-std::string epochlogid();
-
+std::string epochstr();
+long floattimetonano(float time);
 
 #endif

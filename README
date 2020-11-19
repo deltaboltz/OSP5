@@ -1,0 +1,32 @@
+Author: Connor Schultz
+Date:   November 5, 2020
+
+Compilation:
+    The Makefile for this project will create the following:
+        bin/oss
+        bin/user
+
+        The default recipe 'make' will build both of these executables.
+        'make clean' will delete obj/ and bin/, including all files within
+        'make cleanrun' will delete bin/*.out and bin/*.log
+
+Running the program:
+        oss [OPTIONS]
+
+        -h  : Display a MAN-Page style help message
+
+        -v  : Set logging to verbose mode
+
+
+Version Control:
+    This project's version control has been managed under git. For a log of
+    modifications, use 'git log', and its various options.
+
+Outstanding Problems:
+    None, to my knowledge
+
+Encountered Difficulties:
+    None worth mentioning
+
+Bugtesting efforts:
+    Running oss and looking at the log to make sure everything makes sense
