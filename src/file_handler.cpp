@@ -20,11 +20,15 @@ void File::writeline(std::string line) {
     this->write(line + "\n");
 }
 
-void File::write(std::string msg) {
+void File::write(std::string msg)
+{
+
+    this->stream = new std::fstream(this->name.c_str(), this->mode);
 
     (*this->stream) << msg;
 
     if (this->stream->bad()) customerrorquit("Unable to write to file");
 
     this->stream->flush();
+    delete this->stream;
 }
