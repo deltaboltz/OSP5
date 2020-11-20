@@ -14,8 +14,7 @@
 #include "cmd_handler.h"
 
 char* getoptstr(const char* options, const char* flags)
-{
-
+{//best comment
     int optlen = strlen(options);
     int flglen = strlen(flags);
     char* optstr = new char[optlen * 2 + flglen + 1];
