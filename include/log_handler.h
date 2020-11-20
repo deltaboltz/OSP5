@@ -2,8 +2,8 @@
 #define LOG_HANDLER_H
 
 #include <string>
-#include "sys_clk.h"
-#include "res_handler.h"
+#include "clock_work.h"
+#include "resource_handler.h"
 #include "file_handler.h"
 
 struct Log {
@@ -11,8 +11,8 @@ struct Log {
     int linecount;
     int maxlinecount;
     bool verbose;
-    
-    Log(std::string logpath, int max, bool verb) { 
+
+    Log(std::string logpath, int max, bool verb) {
         logfile = File(logpath, APPEND);
         maxlinecount = max;
         verbose = verb;
