@@ -13,6 +13,7 @@ std::string prefix;
 
 void setupprefix(std::string arg0)
 {
+    //test comment
     prefix = arg0;
     rawprefix = arg0;
     prefix += ": Error";
