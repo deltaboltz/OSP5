@@ -6,7 +6,7 @@
 #include <iostream>
 #include "help_handler.h"
 
-void printhelp(std::string progname)
+void printhelp(std::string progname) //when -h is called or an improper flag is used this will print out the help message
 {
     std::cout << "\nUsage: ";
     std::cout << progname << " [OPTION]...\n";

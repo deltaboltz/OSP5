@@ -5,10 +5,12 @@
 
 #include <fstream>
 #include <string>
+
+//includes of custom header files
 #include "error_handler.h"
 #include "file_handler.h"
 
-int File::readline(std::string& outstr)
+int File::readline(std::string& outstr) //reads in a line from an fstream to put into file object
 {
 
     std::ifstream stream(this->name.c_str(), this->mode);
@@ -19,7 +21,7 @@ int File::readline(std::string& outstr)
     return 0;
 }
 
-void File::writeline(std::string line)
+void File::writeline(std::string line) //inserts a new line into the file object
 {
     this->write(line + "\n");
 }

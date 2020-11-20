@@ -9,19 +9,23 @@
 #include <sstream>
 #include <vector>
 #include <sys/stat.h>
+
+//includes of custom header files
 #include "error_handler.h"
 #include "util.h"
 #include "cmd_handler.h"
 
-char* getoptstr(const char* options, const char* flags)
-{//best comment
+char* getoptstr(const char* options, const char* flags) //makes a string for the getopt of cmd flags
+{
     int optlen = strlen(options);
     int flglen = strlen(flags);
     char* optstr = new char[optlen * 2 + flglen + 1];
 
+    //getopt returns : if the required argument has not been met by the program call
     optstr[0] = ':';
     int i = 1;
 
+    //loop through to find the next required getopt flag
     for (int j : range(optlen))
     {
         optstr[i++] = options[j];
@@ -35,30 +39,28 @@ char* getoptstr(const char* options, const char* flags)
     return optstr;
 }
 
-int getcliarg(int argc, char** argv, const char* options, \
-              const char* flags, std::vector<std::string> &optout, \
-              bool* flagout)
+int getcliarg(int argc, char** argv, const char* options, const char* flags, std::vector<std::string> &optout, bool* flagout)
 {
 
     char* optstr = getoptstr(options, flags);
     int c;
     opterr = 0;
 
+    //loop through argv for the flags then stores the value
     while ((c = getopt(argc, argv, optstr)) != -1)
     {
-        if (c == '?')
+        if (c == '?') //if we have an unknown flag then tell the program to stop
         {
-            custerrhelpprompt("Unknown argument '-" +\
-                    std::string(1, (char)optopt) +    "'");
+            custerrhelpprompt("Unknown argument '-" + std::string(1, (char)optopt) +    "'");
         }
-        if (c == ':')
+        if (c == ':') //if a required flag is not met then tell the program to stop
         {
-            custerrhelpprompt("Option '-" +\
-                    std::string(1, (char)optopt) + "' requires an argument!");
+            custerrhelpprompt("Option '-" + std::string(1, (char)optopt) + "' requires an argument!");
         }
 
         int optindex = -1;
 
+        //loop through to see if any matched flag is an option needed for the program
         for (int j : range((int)strlen(options)))
         {
             if (c == options[j])
@@ -82,10 +84,10 @@ int getcliarg(int argc, char** argv, const char* options, \
         }
     }
 
-    return optind;
+    return optind; //returns how my arguments were given in the program call
 }
 
-void parserunpath(char** argv, std::string& runpath, std::string& pref)
+void parserunpath(char** argv, std::string& runpath, std::string& pref) //checks to see if argv[0] to see if need to put the runpath on the programm call
 {
 
 
@@ -94,6 +96,7 @@ void parserunpath(char** argv, std::string& runpath, std::string& pref)
 
     if (split != 0)
     {
+        //adds the runpath to the program call if not given by the initial call
         runpath = rawpath.substr(0, split);
         pref = rawpath.substr(split);
     }
@@ -104,7 +107,7 @@ void parserunpath(char** argv, std::string& runpath, std::string& pref)
     }
 }
 
-bool pathdepcheck(std::string runpath, std::string depname)
+bool pathdepcheck(std::string runpath, std::string depname) //check to makes sure the needed binaries of the programs are in the path to run
 {
     struct stat buffer;
     std::string depcheck = runpath + depname;
