@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <bitset>
 #include <vector>
-#include "shm_handler.h"
+#include "sharedmemory.h"
 #include "error_handler.h"
 
 struct Descriptor
